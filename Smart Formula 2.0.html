@@ -1,0 +1,3511 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartFormula - سیستم مدیریت فرمول‌های تولید</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #1d4ed8;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --bg-input: #334155;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+        }
+
+        .light-mode {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-input: #e2e8f0;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #cbd5e1;
+        }
+
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+
+        /* Category Colors */
+        .category-food { background-color: #f59e0b20; color: #f59e0b; }
+        .category-cosmetic { background-color: #8b5cf620; color: #8b5cf6; }
+        .category-equipment { background-color: #10b98120; color: #10b981; }
+        .category-chemical { background-color: #06b6d420; color: #06b6d4; }
+        .category-pharmaceutical { background-color: #ec489920; color: #ec4899; }
+        .category-other { background-color: #64748b20; color: #64748b; }
+
+        /* Status Colors */
+        .status-active { background-color: #10b98120; color: #10b981; }
+        .status-draft { background-color: #f59e0b20; color: #f59e0b; }
+        .status-archived { background-color: #64748b20; color: #64748b; }
+        .status-pending { background-color: #3b82f620; color: #3b82f6; }
+
+        /* Complexity Colors */
+        .complexity-low { background-color: #10b98120; color: #10b981; }
+        .complexity-medium { background-color: #f59e0b20; color: #f59e0b; }
+        .complexity-high { background-color: #ef444420; color: #ef4444; }
+
+        /* Scrollbar */
+        .scrollbar-thin {
+            scrollbar-width: thin;
+            scrollbar-color: #4b5563 #1f2937;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: #1f2937;
+            border-radius: 3px;
+        }
+
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background-color: #4b5563;
+            border-radius: 3px;
+        }
+
+        /* Formula Card */
+        .formula-card {
+            transition: all 0.3s ease;
+            border-right: 4px solid transparent;
+        }
+
+        .formula-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .formula-card.food { border-right-color: #f59e0b; }
+        .formula-card.cosmetic { border-right-color: #8b5cf6; }
+        .formula-card.equipment { border-right-color: #10b981; }
+        .formula-card.chemical { border-right-color: #06b6d4; }
+        .formula-card.pharmaceutical { border-right-color: #ec4899; }
+
+        /* Ingredient Table */
+        .ingredient-row {
+            transition: all 0.2s ease;
+        }
+
+        .ingredient-row:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
+
+        /* Batch History */
+        .batch-timeline {
+            position: relative;
+            padding-right: 30px;
+        }
+
+        .batch-timeline::before {
+            content: '';
+            position: absolute;
+            right: 10px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #4b5563;
+        }
+
+        .batch-event {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .batch-event::before {
+            content: '';
+            position: absolute;
+            right: -28px;
+            top: 5px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #3b82f6;
+            border: 3px solid var(--bg-card);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .mobile-stack {
+                flex-direction: column !important;
+            }
+            
+            .mobile-full-width {
+                width: 100% !important;
+            }
+            
+            .mobile-hidden {
+                display: none !important;
+            }
+            
+            .mobile-text-center {
+                text-align: center !important;
+            }
+            
+            .mobile-p-2 {
+                padding: 0.5rem !important;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        /* Loading */
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Formula Editor */
+        .formula-editor {
+            min-height: 200px;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            background-color: var(--bg-input);
+        }
+
+        /* Cost Indicator */
+        .cost-low { color: #10b981; }
+        .cost-medium { color: #f59e0b; }
+        .cost-high { color: #ef4444; }
+
+        /* Safety Level */
+        .safety-low { background-color: #ef444420; color: #ef4444; }
+        .safety-medium { background-color: #f59e0b20; color: #f59e0b; }
+        .safety-high { background-color: #10b98120; color: #10b981; }
+
+        /* Print Styles */
+        @media print {
+            body {
+                background-color: white !important;
+                color: black !important;
+                font-size: 12pt;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+            
+            .print-full-width {
+                width: 100% !important;
+            }
+            
+            .print-show {
+                display: block !important;
+            }
+            
+            .print-p-4 {
+                padding: 1rem !important;
+            }
+            
+            .print-border {
+                border: 1px solid #ddd !important;
+            }
+            
+            .print-text-black {
+                color: black !important;
+            }
+            
+            .print-bg-white {
+                background-color: white !important;
+            }
+            
+            .print-shadow-none {
+                box-shadow: none !important;
+            }
+            
+            .print-mb-4 {
+                margin-bottom: 1rem !important;
+            }
+            
+            .print-page-break {
+                page-break-before: always;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100">
+    <!-- Header -->
+    <header class="bg-gray-800 border-b border-gray-700 shadow-lg no-print">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-4 space-x-reverse">
+                    <div class="bg-gradient-to-r from-blue-600 to-purple-600 w-12 h-12 rounded-xl flex items-center justify-center shadow-lg">
+                        <i class="fas fa-flask text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                            SmartFormula
+                        </h1>
+                        <p class="text-sm text-gray-400">سیستم مدیریت فرمول‌های تولید</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4 space-x-reverse">
+                    <!-- Backup/Restore Button -->
+                    <div class="relative">
+                        <button onclick="toggleBackupMenu()" class="p-3 rounded-xl bg-gray-700 hover:bg-gray-600 transition-all shadow-md">
+                            <i class="fas fa-database text-xl"></i>
+                        </button>
+                        <div id="backup-menu" class="hidden absolute left-0 mt-2 w-64 bg-gray-800 rounded-xl shadow-2xl border border-gray-700 z-50">
+                            <div class="p-4 border-b border-gray-700">
+                                <h3 class="font-bold text-lg">مدیریت داده‌ها</h3>
+                            </div>
+                            <div class="p-2">
+                                <button onclick="backupData()" class="w-full text-right p-3 hover:bg-gray-700 rounded-lg flex items-center justify-between">
+                                    <span>پشتیبان‌گیری</span>
+                                    <i class="fas fa-download text-green-400"></i>
+                                </button>
+                                <button onclick="openRestoreModal()" class="w-full text-right p-3 hover:bg-gray-700 rounded-lg flex items-center justify-between">
+                                    <span>بازیابی</span>
+                                    <i class="fas fa-upload text-blue-400"></i>
+                                </button>
+                                <button onclick="openResetModal()" class="w-full text-right p-3 hover:bg-gray-700 rounded-lg flex items-center justify-between">
+                                    <span>ریست داده‌ها</span>
+                                    <i class="fas fa-trash text-red-400"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="toggleTheme()" class="p-3 rounded-xl bg-gray-700 hover:bg-gray-600 transition-all shadow-md">
+                        <i class="fas fa-moon text-xl" id="theme-icon"></i>
+                    </button>
+                    <div class="relative">
+                        <button onclick="toggleNotifications()" class="p-3 rounded-xl bg-gray-700 hover:bg-gray-600 transition-all shadow-md relative">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span id="notification-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center animate-pulse">0</span>
+                        </button>
+                        <div id="notification-panel" class="hidden absolute left-0 mt-2 w-80 bg-gray-800 rounded-xl shadow-2xl border border-gray-700 z-50">
+                            <div class="p-4 border-b border-gray-700">
+                                <h3 class="font-bold text-lg">اعلان‌ها</h3>
+                            </div>
+                            <div id="notification-list" class="max-h-96 overflow-y-auto scrollbar-thin">
+                                <!-- Notifications -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-3 space-x-reverse">
+                        <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center shadow-lg">
+                            <i class="fas fa-user text-white"></i>
+                        </div>
+                        <div class="mobile-hidden">
+                            <p class="text-sm font-medium">کاربر فرمول‌ساز</p>
+                            <p class="text-xs text-gray-400">شیمی‌دان ارشد</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-6">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Sidebar -->
+            <div class="lg:col-span-1 space-y-6">
+                <!-- Quick Stats -->
+                <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-5 border border-gray-700 shadow-xl">
+                    <h3 class="font-bold text-lg mb-4 pb-3 border-b border-gray-700 flex items-center">
+                        <i class="fas fa-chart-bar ml-2 text-blue-400"></i>
+                        آمار سریع
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 rounded-lg bg-blue-900 flex items-center justify-center ml-2">
+                                    <i class="fas fa-flask text-blue-300"></i>
+                                </div>
+                                <span class="text-gray-400">فرمول‌های فعال</span>
+                            </div>
+                            <span class="text-xl font-bold" id="stat-active">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 rounded-lg bg-green-900 flex items-center justify-center ml-2">
+                                    <i class="fas fa-box text-green-300"></i>
+                                </div>
+                                <span class="text-gray-400">محصولات</span>
+                            </div>
+                            <span class="text-xl font-bold" id="stat-products">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 rounded-lg bg-purple-900 flex items-center justify-center ml-2">
+                                    <i class="fas fa-atom text-purple-300"></i>
+                                </div>
+                                <span class="text-gray-400">مواد اولیه</span>
+                            </div>
+                            <span class="text-xl font-bold" id="stat-ingredients">0</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 rounded-lg bg-yellow-900 flex items-center justify-center ml-2">
+                                    <i class="fas fa-industry text-yellow-300"></i>
+                                </div>
+                                <span class="text-gray-400">دستورالعمل‌ها</span>
+                            </div>
+                            <span class="text-xl font-bold" id="stat-procedures">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-5 border border-gray-700 shadow-xl">
+                    <h3 class="font-bold text-lg mb-4 pb-3 border-b border-gray-700 flex items-center">
+                        <i class="fas fa-bolt ml-2 text-yellow-400"></i>
+                        اقدامات سریع
+                    </h3>
+                    <div class="space-y-3">
+                        <button onclick="openNewFormulaModal()" class="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-xl flex items-center justify-center transition-all shadow-lg hover:shadow-xl">
+                            <i class="fas fa-plus ml-2"></i>
+                            فرمول جدید
+                        </button>
+                        <button onclick="openNewProductModal()" class="w-full py-3 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 rounded-xl flex items-center justify-center transition-all shadow-lg hover:shadow-xl">
+                            <i class="fas fa-box-open ml-2"></i>
+                            محصول جدید
+                        </button>
+                        <button onclick="openNewIngredientModal()" class="w-full py-3 bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 rounded-xl flex items-center justify-center transition-all shadow-lg hover:shadow-xl">
+                            <i class="fas fa-atom ml-2"></i>
+                            ماده اولیه جدید
+                        </button>
+                        <button onclick="openBatchProductionModal()" class="w-full py-3 bg-gradient-to-r from-orange-600 to-orange-700 hover:from-orange-700 hover:to-orange-800 rounded-xl flex items-center justify-center transition-all shadow-lg hover:shadow-xl">
+                            <i class="fas fa-industry ml-2"></i>
+                            تولید سریع
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-5 border border-gray-700 shadow-xl">
+                    <h3 class="font-bold text-lg mb-4 pb-3 border-b border-gray-700 flex items-center">
+                        <i class="fas fa-filter ml-2 text-purple-400"></i>
+                        فیلترها
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">دسته‌بندی</label>
+                            <select id="category-filter" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="all">همه دسته‌بندی‌ها</option>
+                                <option value="food">مواد غذایی</option>
+                                <option value="cosmetic">آرایشی و بهداشتی</option>
+                                <option value="equipment">تجهیزات و دستگاه‌ها</option>
+                                <option value="chemical">مواد شیمیایی</option>
+                                <option value="pharmaceutical">دارویی</option>
+                                <option value="other">سایر</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">وضعیت</label>
+                            <select id="status-filter" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="all">همه وضعیت‌ها</option>
+                                <option value="active">فعال</option>
+                                <option value="draft">پیش‌نویس</option>
+                                <option value="archived">بایگانی</option>
+                                <option value="pending">در انتظار تایید</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">پیچیدگی</label>
+                            <select id="complexity-filter" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="all">همه سطوح</option>
+                                <option value="low">ساده</option>
+                                <option value="medium">متوسط</option>
+                                <option value="high">پیچیده</option>
+                            </select>
+                        </div>
+                        <button onclick="applyFilters()" class="w-full py-3 bg-gradient-to-r from-gray-700 to-gray-800 hover:from-gray-600 hover:to-gray-700 rounded-xl transition-all">
+                            اعمال فیلترها
+                        </button>
+                        <button onclick="resetFilters()" class="w-full py-3 bg-gradient-to-r from-red-700 to-red-800 hover:from-red-600 hover:to-red-700 rounded-xl transition-all">
+                            <i class="fas fa-times ml-2"></i>
+                            پاک کردن فیلترها
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Activities -->
+                <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-5 border border-gray-700 shadow-xl">
+                    <h3 class="font-bold text-lg mb-4 pb-3 border-b border-gray-700 flex items-center">
+                        <i class="fas fa-history ml-2 text-green-400"></i>
+                        فعالیت‌های اخیر
+                    </h3>
+                    <div id="recent-activities" class="space-y-3 max-h-60 overflow-y-auto scrollbar-thin">
+                        <!-- Activities will be loaded here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="lg:col-span-3 space-y-6">
+                <!-- Tabs -->
+                <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl border border-gray-700 shadow-xl">
+                    <div class="flex border-b border-gray-700 overflow-x-auto">
+                        <button onclick="switchTab('formulas')" id="tab-formulas" class="flex-1 py-4 font-medium border-b-2 border-blue-500 text-blue-400 flex items-center justify-center min-w-[140px]">
+                            <i class="fas fa-flask ml-2"></i>
+                            فرمول‌ها
+                        </button>
+                        <button onclick="switchTab('products')" id="tab-products" class="flex-1 py-4 font-medium border-b-2 border-transparent text-gray-400 hover:text-white flex items-center justify-center min-w-[140px]">
+                            <i class="fas fa-box ml-2"></i>
+                            محصولات
+                        </button>
+                        <button onclick="switchTab('ingredients')" id="tab-ingredients" class="flex-1 py-4 font-medium border-b-2 border-transparent text-gray-400 hover:text-white flex items-center justify-center min-w-[140px]">
+                            <i class="fas fa-atom ml-2"></i>
+                            مواد اولیه
+                        </button>
+                        <button onclick="switchTab('batches')" id="tab-batches" class="flex-1 py-4 font-medium border-b-2 border-transparent text-gray-400 hover:text-white flex items-center justify-center min-w-[140px]">
+                            <i class="fas fa-industry ml-2"></i>
+                            تولیدات
+                        </button>
+                        <button onclick="switchTab('analytics')" id="tab-analytics" class="flex-1 py-4 font-medium border-b-2 border-transparent text-gray-400 hover:text-white flex items-center justify-center min-w-[140px]">
+                            <i class="fas fa-chart-line ml-2"></i>
+                            آنالیز
+                        </button>
+                    </div>
+
+                    <!-- Formulas Tab -->
+                    <div id="tab-formulas-content" class="p-6">
+                        <div class="flex justify-between items-center mb-6 mobile-stack">
+                            <h2 class="text-2xl font-bold">فرمول‌ها</h2>
+                            <div class="flex items-center space-x-3 space-x-reverse mobile-full-width mobile-mt-3">
+                                <div class="relative mobile-full-width">
+                                    <input type="text" id="formula-search" placeholder="جستجوی فرمول..." class="w-64 mobile-full-width bg-gray-700 border border-gray-600 rounded-xl pl-10 pr-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <i class="fas fa-search absolute right-3 top-3.5 text-gray-400"></i>
+                                </div>
+                                <select id="sort-formulas" class="bg-gray-700 border border-gray-600 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="newest">جدیدترین</option>
+                                    <option value="oldest">قدیمی‌ترین</option>
+                                    <option value="name">نام الفبا</option>
+                                    <option value="cost">کمترین هزینه</option>
+                                    <option value="complexity">سطح پیچیدگی</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Formulas Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="formulas-grid">
+                            <!-- Formulas will be loaded here -->
+                        </div>
+
+                        <!-- Empty State -->
+                        <div id="formulas-empty" class="hidden text-center py-12">
+                            <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gray-800 flex items-center justify-center">
+                                <i class="fas fa-flask text-4xl text-gray-600"></i>
+                            </div>
+                            <h3 class="text-xl font-bold mb-2">فرمولی یافت نشد</h3>
+                            <p class="text-gray-400 mb-6">هنوز هیچ فرمولی ثبت نشده است</p>
+                            <button onclick="openNewFormulaModal()" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all">
+                                <i class="fas fa-plus ml-2"></i>
+                                ایجاد اولین فرمول
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Products Tab -->
+                    <div id="tab-products-content" class="hidden p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold">محصولات</h2>
+                            <button onclick="openNewProductModal()" class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 rounded-xl hover:from-green-700 hover:to-green-800 transition-all">
+                                <i class="fas fa-plus ml-2"></i>
+                                محصول جدید
+                            </button>
+                        </div>
+
+                        <div class="overflow-x-auto rounded-xl border border-gray-700">
+                            <table class="w-full">
+                                <thead class="bg-gray-800">
+                                    <tr>
+                                        <th class="p-4 text-right font-medium">نام محصول</th>
+                                        <th class="p-4 text-right font-medium">دسته‌بندی</th>
+                                        <th class="p-4 text-right font-medium">فرمول</th>
+                                        <th class="p-4 text-right font-medium">واحد تولید</th>
+                                        <th class="p-4 text-right font-medium">هزینه واحد</th>
+                                        <th class="p-4 text-right font-medium">عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="products-table" class="divide-y divide-gray-700">
+                                    <!-- Products will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Ingredients Tab -->
+                    <div id="tab-ingredients-content" class="hidden p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold">مواد اولیه</h2>
+                            <button onclick="openNewIngredientModal()" class="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl hover:from-purple-700 hover:to-purple-800 transition-all">
+                                <i class="fas fa-plus ml-2"></i>
+                                ماده اولیه جدید
+                            </button>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="ingredients-grid">
+                            <!-- Ingredients will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Batches Tab -->
+                    <div id="tab-batches-content" class="hidden p-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold">تولیدات</h2>
+                            <button onclick="openBatchProductionModal()" class="px-4 py-2 bg-gradient-to-r from-orange-600 to-orange-700 rounded-xl hover:from-orange-700 hover:to-orange-800 transition-all">
+                                <i class="fas fa-plus ml-2"></i>
+                                تولید جدید
+                            </button>
+                        </div>
+
+                        <div class="space-y-6" id="batches-list">
+                            <!-- Batches will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Analytics Tab -->
+                    <div id="tab-analytics-content" class="hidden p-6">
+                        <h2 class="text-2xl font-bold mb-6">آنالیز و گزارش‌ها</h2>
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                            <!-- Cost Distribution -->
+                            <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border border-gray-700">
+                                <h3 class="font-bold text-lg mb-4">توزیع هزینه‌ها</h3>
+                                <div class="h-64">
+                                    <canvas id="cost-chart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Category Distribution -->
+                            <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border border-gray-700">
+                                <h3 class="font-bold text-lg mb-4">توزیع بر اساس دسته‌بندی</h3>
+                                <div class="h-64">
+                                    <canvas id="category-chart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Production Statistics -->
+                        <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-6 border border-gray-700">
+                            <h3 class="font-bold text-lg mb-6">آمار تولید ماهانه</h3>
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead>
+                                        <tr class="bg-gray-800">
+                                            <th class="p-3 text-right">محصول</th>
+                                            <th class="p-3 text-right">تعداد تولید</th>
+                                            <th class="p-3 text-right">مواد مصرفی</th>
+                                            <th class="p-3 text-right">هزینه کل</th>
+                                            <th class="p-3 text-right">میانگین کیفیت</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="production-stats">
+                                        <!-- Production stats will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <!-- New Formula Modal -->
+    <div id="new-formula-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl w-full max-w-4xl mx-4 border border-gray-700 max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold">فرمول جدید</h3>
+                    <button onclick="closeModal('new-formula-modal')" class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <!-- Basic Information -->
+                    <div class="bg-gray-800/50 rounded-xl p-5">
+                        <h4 class="font-bold text-lg mb-4 flex items-center">
+                            <i class="fas fa-info-circle ml-2 text-blue-400"></i>
+                            اطلاعات پایه
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">نام فرمول *</label>
+                                <input type="text" id="formula-name" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="مثال: کرم مرطوب کننده">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">کد فرمول *</label>
+                                <input type="text" id="formula-code" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="مثال: F-001">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">دسته‌بندی *</label>
+                                <select id="formula-category" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="food">مواد غذایی</option>
+                                    <option value="cosmetic">آرایشی و بهداشتی</option>
+                                    <option value="equipment">تجهیزات و دستگاه‌ها</option>
+                                    <option value="chemical">مواد شیمیایی</option>
+                                    <option value="pharmaceutical">دارویی</option>
+                                    <option value="other">سایر</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">سطح پیچیدگی</label>
+                                <select id="formula-complexity" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="low">ساده</option>
+                                    <option value="medium" selected>متوسط</option>
+                                    <option value="high">پیچیده</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-sm text-gray-400 mb-2">توضیحات</label>
+                            <textarea id="formula-description" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 h-32 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="شرح کامل فرمول..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Ingredients -->
+                    <div class="bg-gray-800/50 rounded-xl p-5">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-bold text-lg flex items-center">
+                                <i class="fas fa-atom ml-2 text-green-400"></i>
+                                مواد اولیه
+                            </h4>
+                            <button onclick="addIngredientRow()" class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 rounded-xl hover:from-green-700 hover:to-green-800 transition-all">
+                                <i class="fas fa-plus ml-2"></i>
+                                افزودن ماده
+                            </button>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-700">
+                                    <tr>
+                                        <th class="p-3 text-right font-medium">ماده اولیه</th>
+                                        <th class="p-3 text-right font-medium">مقدار</th>
+                                        <th class="p-3 text-right font-medium">واحد</th>
+                                        <th class="p-3 text-right font-medium">هزینه</th>
+                                        <th class="p-3 text-right font-medium">عملیات</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="ingredients-table">
+                                    <!-- Ingredient rows will be added here -->
+                                </tbody>
+                                <tfoot>
+                                    <tr>
+                                        <td colspan="3" class="p-3 text-left font-bold">جمع کل هزینه مواد:</td>
+                                        <td id="total-ingredients-cost" class="p-3 font-bold text-green-400">0 ریال</td>
+                                        <td></td>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Production Process -->
+                    <div class="bg-gray-800/50 rounded-xl p-5">
+                        <h4 class="font-bold text-lg mb-4 flex items-center">
+                            <i class="fas fa-industry ml-2 text-yellow-400"></i>
+                            فرآیند تولید
+                        </h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">دستورالعمل تولید</label>
+                                <textarea id="production-instructions" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 h-40 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="مراحل تولید را به ترتیب بنویسید..."></textarea>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm text-gray-400 mb-2">زمان تولید (دقیقه)</label>
+                                    <input type="number" id="production-time" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="60">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-400 mb-2">دمای تولید (°C)</label>
+                                    <input type="number" id="production-temperature" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="25">
+                                </div>
+                                <div>
+                                    <label class="block text-sm text-gray-400 mb-2">سطح ایمنی</label>
+                                    <select id="production-safety" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                        <option value="high">بالا</option>
+                                        <option value="medium" selected>متوسط</option>
+                                        <option value="low">پایین</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Additional Costs -->
+                    <div class="bg-gray-800/50 rounded-xl p-5">
+                        <h4 class="font-bold text-lg mb-4 flex items-center">
+                            <i class="fas fa-calculator ml-2 text-purple-400"></i>
+                            هزینه‌های اضافی
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">هزینه نیروی کار (ریال)</label>
+                                <input type="number" id="labor-cost" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="0">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">هزینه انرژی (ریال)</label>
+                                <input type="number" id="energy-cost" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="0">
+                            </div>
+                            <div>
+                                <label class="block text-sm text-gray-400 mb-2">هسته‌های دیگر (ریال)</label>
+                                <input type="number" id="other-costs" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="0">
+                            </div>
+                        </div>
+                        <div class="mt-4 p-4 bg-gray-900/50 rounded-xl">
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-bold">هزینه کل فرمول:</span>
+                                <span id="total-formula-cost" class="text-2xl font-bold text-green-400">0 ریال</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Footer Buttons -->
+                    <div class="flex justify-end space-x-4 space-x-reverse">
+                        <button onclick="closeModal('new-formula-modal')" class="px-6 py-3 bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all">
+                            انصراف
+                        </button>
+                        <button onclick="saveFormula()" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all flex items-center">
+                            <i class="fas fa-save ml-2"></i>
+                            ذخیره فرمول
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formula Detail Modal -->
+    <div id="formula-detail-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl w-full max-w-6xl mx-4 border border-gray-700 max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-2xl font-bold" id="detail-formula-name">فرمول</h3>
+                        <p class="text-gray-400" id="detail-formula-code"></p>
+                    </div>
+                    <div class="flex space-x-3 space-x-reverse">
+                        <button onclick="printFormula()" class="px-4 py-2 bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all">
+                            <i class="fas fa-print ml-2"></i>
+                            چاپ
+                        </button>
+                        <button onclick="closeModal('formula-detail-modal')" class="px-4 py-2 bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all">
+                            <i class="fas fa-times ml-2"></i>
+                            بستن
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Left Column -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- Basic Info -->
+                        <div class="bg-gray-800/50 rounded-xl p-5">
+                            <h4 class="font-bold text-lg mb-4">اطلاعات فرمول</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <div class="text-sm text-gray-400 mb-1">دسته‌بندی</div>
+                                    <div id="detail-category" class="font-medium"></div>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-400 mb-1">سطح پیچیدگی</div>
+                                    <div id="detail-complexity" class="font-medium"></div>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-400 mb-1">وضعیت</div>
+                                    <div id="detail-status" class="font-medium"></div>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-400 mb-1">تاریخ ایجاد</div>
+                                    <div id="detail-created-at" class="font-medium"></div>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="text-sm text-gray-400 mb-1">توضیحات</div>
+                                <div id="detail-description" class="text-gray-300"></div>
+                            </div>
+                        </div>
+
+                        <!-- Ingredients -->
+                        <div class="bg-gray-800/50 rounded-xl p-5">
+                            <h4 class="font-bold text-lg mb-4">مواد اولیه</h4>
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-gray-700">
+                                        <tr>
+                                            <th class="p-3 text-right font-medium">ماده</th>
+                                            <th class="p-3 text-right font-medium">مقدار</th>
+                                            <th class="p-3 text-right font-medium">واحد</th>
+                                            <th class="p-3 text-right font-medium">هزینه</th>
+                                            <th class="p-3 text-right font-medium">درصد</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="detail-ingredients">
+                                        <!-- Ingredients will be loaded here -->
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="bg-gray-900">
+                                            <td colspan="3" class="p-3 text-left font-bold">جمع کل:</td>
+                                            <td id="detail-total-cost" class="p-3 font-bold text-green-400"></td>
+                                            <td class="p-3 font-bold">100%</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Production Process -->
+                        <div class="bg-gray-800/50 rounded-xl p-5">
+                            <h4 class="font-bold text-lg mb-4">فرآیند تولید</h4>
+                            <div class="space-y-4">
+                                <div>
+                                    <div class="text-sm text-gray-400 mb-1">دستورالعمل</div>
+                                    <div id="detail-instructions" class="text-gray-300 whitespace-pre-line"></div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <div class="text-sm text-gray-400 mb-1">زمان تولید</div>
+                                        <div id="detail-production-time" class="font-medium"></div>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm text-gray-400 mb-1">دمای تولید</div>
+                                        <div id="detail-temperature" class="font-medium"></div>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm text-gray-400 mb-1">سطح ایمنی</div>
+                                        <div id="detail-safety" class="font-medium"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="space-y-6">
+                        <!-- Cost Summary -->
+                        <div class="bg-gray-800/50 rounded-xl p-5">
+                            <h4 class="font-bold text-lg mb-4">خلاصه هزینه‌ها</h4>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">مواد اولیه</span>
+                                    <span id="cost-materials"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">نیروی کار</span>
+                                    <span id="cost-labor"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">انرژی</span>
+                                    <span id="cost-energy"></span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-400">سایر هزینه‌ها</span>
+                                    <span id="cost-other"></span>
+                                </div>
+                                <div class="border-t border-gray-700 pt-3 mt-3">
+                                    <div class="flex justify-between font-bold text-lg">
+                                        <span>هزینه کل</span>
+                                        <span id="cost-total" class="text-green-400"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="bg-gray-800/50 rounded-xl p-5">
+                            <h4 class="font-bold text-lg mb-4">اقدامات سریع</h4>
+                            <div class="space-y-3">
+                                <button onclick="startProductionFromDetail()" class="w-full py-3 bg-gradient-to-r from-orange-600 to-orange-700 rounded-xl hover:from-orange-700 hover:to-orange-800 transition-all">
+                                    <i class="fas fa-play ml-2"></i>
+                                    شروع تولید
+                                </button>
+                                <button onclick="duplicateFormula()" class="w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all">
+                                    <i class="fas fa-copy ml-2"></i>
+                                    کپی فرمول
+                                </button>
+                                <button onclick="editFormula()" class="w-full py-3 bg-gradient-to-r from-green-600 to-green-700 rounded-xl hover:from-green-700 hover:to-green-800 transition-all">
+                                    <i class="fas fa-edit ml-2"></i>
+                                    ویرایش فرمول
+                                </button>
+                                <button onclick="archiveFormula()" class="w-full py-3 bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all">
+                                    <i class="fas fa-archive ml-2"></i>
+                                    بایگانی کردن
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Related Products -->
+                        <div class="bg-gray-800/50 rounded-xl p-5">
+                            <h4 class="font-bold text-lg mb-4">محصولات مرتبط</h4>
+                            <div id="related-products" class="space-y-2">
+                                <!-- Related products will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Production Batch Modal -->
+    <div id="production-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl w-full max-w-2xl mx-4 border border-gray-700">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold">شروع تولید</h3>
+                    <button onclick="closeModal('production-modal')" class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">فرمول</label>
+                        <select id="batch-formula" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <!-- Formulas will be loaded here -->
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">تعداد تولید</label>
+                            <input type="number" id="batch-quantity" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="1" min="1">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">شماره بچ</label>
+                            <input type="text" id="batch-number" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="B-001">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">تاریخ تولید</label>
+                        <input type="datetime-local" id="batch-date" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">یادداشت</label>
+                        <textarea id="batch-notes" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 h-32 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="یادداشت‌های مربوط به این تولید..."></textarea>
+                    </div>
+
+                    <!-- Batch Summary -->
+                    <div class="bg-gray-900/50 rounded-xl p-4">
+                        <h4 class="font-bold mb-3">خلاصه تولید</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">هزینه هر واحد:</span>
+                                <span id="batch-unit-cost" class="font-medium">0 ریال</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-400">هزینه کل:</span>
+                                <span id="batch-total-cost" class="font-bold text-green-400">0 ریال</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end space-x-4 space-x-reverse">
+                        <button onclick="closeModal('production-modal')" class="px-6 py-3 bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all">
+                            انصراف
+                        </button>
+                        <button onclick="startProduction()" class="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 rounded-xl hover:from-green-700 hover:to-green-800 transition-all flex items-center">
+                            <i class="fas fa-play ml-2"></i>
+                            شروع تولید
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Product Modal -->
+    <div id="new-product-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl w-full max-w-2xl mx-4 border border-gray-700">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold">محصول جدید</h3>
+                    <button onclick="closeModal('new-product-modal')" class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">نام محصول *</label>
+                            <input type="text" id="product-name" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="مثال: کرم مرطوب کننده 50ml">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">SKU *</label>
+                            <input type="text" id="product-sku" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="مثال: CRM-50">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">فرمول *</label>
+                            <select id="product-formula" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="">انتخاب فرمول</option>
+                                <!-- Formulas will be loaded here -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">دسته‌بندی</label>
+                            <select id="product-category" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="food">مواد غذایی</option>
+                                <option value="cosmetic">آرایشی و بهداشتی</option>
+                                <option value="equipment">تجهیزات و دستگاه‌ها</option>
+                                <option value="chemical">مواد شیمیایی</option>
+                                <option value="pharmaceutical">دارویی</option>
+                                <option value="other">سایر</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">واحد تولید</label>
+                            <input type="text" id="product-unit" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="مثال: عدد، بسته">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">قیمت فروش (ریال)</label>
+                            <input type="number" id="product-price" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="0">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">توضیحات</label>
+                        <textarea id="product-description" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 h-32 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="توضیحات محصول..."></textarea>
+                    </div>
+
+                    <div class="flex justify-end space-x-4 space-x-reverse">
+                        <button onclick="closeModal('new-product-modal')" class="px-6 py-3 bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all">
+                            انصراف
+                        </button>
+                        <button onclick="saveProduct()" class="px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 rounded-xl hover:from-green-700 hover:to-green-800 transition-all flex items-center">
+                            <i class="fas fa-save ml-2"></i>
+                            ذخیره محصول
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Ingredient Modal -->
+    <div id="new-ingredient-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl w-full max-w-2xl mx-4 border border-gray-700">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold">ماده اولیه جدید</h3>
+                    <button onclick="closeModal('new-ingredient-modal')" class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">نام ماده *</label>
+                            <input type="text" id="ingredient-name" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="مثال: آب تصفیه شده">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">کد ماده *</label>
+                            <input type="text" id="ingredient-code" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="مثال: I-001">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">دسته‌بندی</label>
+                            <select id="ingredient-category" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="chemical">مواد شیمیایی</option>
+                                <option value="food">مواد غذایی</option>
+                                <option value="cosmetic">آرایشی و بهداشتی</option>
+                                <option value="pharmaceutical">دارویی</option>
+                                <option value="other">سایر</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">واحد اندازه‌گیری</label>
+                            <input type="text" id="ingredient-unit" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="مثال: ml, gr">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">هزینه واحد (ریال) *</label>
+                            <input type="number" id="ingredient-cost" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="0">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">موجودی اولیه</label>
+                            <input type="number" id="ingredient-stock" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="0">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">حداقل موجودی</label>
+                            <input type="number" id="ingredient-min-stock" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" value="10">
+                        </div>
+                        <div>
+                            <label class="block text-sm text-gray-400 mb-2">تامین کننده</label>
+                            <input type="text" id="ingredient-supplier" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="نام تامین کننده">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">توضیحات</label>
+                        <textarea id="ingredient-description" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 h-32 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="توضیحات ماده اولیه..."></textarea>
+                    </div>
+
+                    <div class="flex justify-end space-x-4 space-x-reverse">
+                        <button onclick="closeModal('new-ingredient-modal')" class="px-6 py-3 bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all">
+                            انصراف
+                        </button>
+                        <button onclick="saveIngredient()" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 rounded-xl hover:from-purple-700 hover:to-purple-800 transition-all flex items-center">
+                            <i class="fas fa-save ml-2"></i>
+                            ذخیره ماده اولیه
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Restore Data Modal -->
+    <div id="restore-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl w-full max-w-md mx-4 border border-gray-700">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold">بازیابی داده‌ها</h3>
+                    <button onclick="closeModal('restore-modal')" class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-yellow-900/20 border border-yellow-700 rounded-xl p-4">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-exclamation-triangle text-yellow-400 ml-2"></i>
+                            <span class="font-bold text-yellow-400">هشدار</span>
+                        </div>
+                        <p class="text-yellow-300 text-sm">بازیابی داده‌ها، داده‌های فعلی شما را جایگزین خواهد کرد. لطفاً ابتدا از داده‌های فعلی پشتیبان بگیرید.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">فایل پشتیبان (JSON)</label>
+                        <input type="file" id="backup-file" accept=".json" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    </div>
+
+                    <div class="flex justify-end space-x-4 space-x-reverse">
+                        <button onclick="closeModal('restore-modal')" class="px-6 py-3 bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all">
+                            انصراف
+                        </button>
+                        <button onclick="restoreData()" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all flex items-center">
+                            <i class="fas fa-upload ml-2"></i>
+                            بازیابی
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reset Data Modal -->
+    <div id="reset-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
+        <div class="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl w-full max-w-md mx-4 border border-gray-700">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold">ریست داده‌ها</h3>
+                    <button onclick="closeModal('reset-modal')" class="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-6">
+                    <div class="bg-red-900/20 border border-red-700 rounded-xl p-4">
+                        <div class="flex items-center mb-2">
+                            <i class="fas fa-exclamation-triangle text-red-400 ml-2"></i>
+                            <span class="font-bold text-red-400">هشدار جدی</span>
+                        </div>
+                        <p class="text-red-300 text-sm">این عمل تمام داده‌های شما (فرمول‌ها، محصولات، مواد اولیه، تولیدات) را حذف کرده و به حالت اولیه برمی‌گرداند. این عمل غیرقابل بازگشت است.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-gray-400 mb-2">برای تایید، عبارت "تایید ریست" را وارد کنید</label>
+                        <input type="text" id="reset-confirm" class="w-full bg-gray-700 border border-gray-600 rounded-xl p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="تایید ریست">
+                    </div>
+
+                    <div class="flex justify-end space-x-4 space-x-reverse">
+                        <button onclick="closeModal('reset-modal')" class="px-6 py-3 bg-gradient-to-r from-gray-700 to-gray-800 rounded-xl hover:from-gray-600 hover:to-gray-700 transition-all">
+                            انصراف
+                        </button>
+                        <button onclick="resetData()" class="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 rounded-xl hover:from-red-700 hover:to-red-800 transition-all flex items-center">
+                            <i class="fas fa-trash ml-2"></i>
+                            ریست داده‌ها
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="spinner mx-auto mb-4"></div>
+            <div class="text-white text-lg">در حال پردازش...</div>
+        </div>
+    </div>
+
+    <!-- Print Template (Hidden by default) -->
+    <div id="print-template" class="hidden print-show">
+        <div class="p-8 print-bg-white print-text-black">
+            <div class="text-center mb-8 border-b pb-4 print-border">
+                <h1 class="text-3xl font-bold mb-2">SmartFormula</h1>
+                <p class="text-gray-600">سیستم مدیریت فرمول‌های تولید</p>
+                <p class="text-gray-500 text-sm mt-2">تاریخ چاپ: <span id="print-date"></span></p>
+            </div>
+            
+            <div class="mb-8">
+                <h2 class="text-2xl font-bold mb-4" id="print-formula-name"></h2>
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <span class="font-bold">کد فرمول:</span>
+                        <span id="print-formula-code"></span>
+                    </div>
+                    <div>
+                        <span class="font-bold">دسته‌بندی:</span>
+                        <span id="print-formula-category"></span>
+                    </div>
+                    <div>
+                        <span class="font-bold">تاریخ ایجاد:</span>
+                        <span id="print-formula-date"></span>
+                    </div>
+                    <div>
+                        <span class="font-bold">سطح پیچیدگی:</span>
+                        <span id="print-formula-complexity"></span>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <span class="font-bold">توضیحات:</span>
+                    <p id="print-formula-description" class="mt-2"></p>
+                </div>
+            </div>
+            
+            <div class="mb-8">
+                <h3 class="text-xl font-bold mb-4 border-b pb-2 print-border">مواد اولیه</h3>
+                <table class="w-full border print-border mb-4">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="p-2 border print-border">ماده اولیه</th>
+                            <th class="p-2 border print-border">مقدار</th>
+                            <th class="p-2 border print-border">واحد</th>
+                            <th class="p-2 border print-border">هزینه</th>
+                            <th class="p-2 border print-border">درصد</th>
+                        </tr>
+                    </thead>
+                    <tbody id="print-ingredients">
+                    </tbody>
+                    <tfoot>
+                        <tr class="font-bold">
+                            <td colspan="3" class="p-2 border print-border text-left">جمع کل:</td>
+                            <td id="print-total-cost" class="p-2 border print-border"></td>
+                            <td class="p-2 border print-border">100%</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+            
+            <div class="mb-8">
+                <h3 class="text-xl font-bold mb-4 border-b pb-2 print-border">فرآیند تولید</h3>
+                <div class="mb-4">
+                    <span class="font-bold">دستورالعمل تولید:</span>
+                    <pre id="print-instructions" class="mt-2 whitespace-pre-line bg-gray-50 p-4 rounded print-border"></pre>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <span class="font-bold">زمان تولید:</span>
+                        <span id="print-production-time"></span>
+                    </div>
+                    <div>
+                        <span class="font-bold">دمای تولید:</span>
+                        <span id="print-temperature"></span>
+                    </div>
+                    <div>
+                        <span class="font-bold">سطح ایمنی:</span>
+                        <span id="print-safety"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-8">
+                <h3 class="text-xl font-bold mb-4 border-b pb-2 print-border">خلاصه هزینه‌ها</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex justify-between border-b pb-2 print-border">
+                        <span>مواد اولیه:</span>
+                        <span id="print-cost-materials"></span>
+                    </div>
+                    <div class="flex justify-between border-b pb-2 print-border">
+                        <span>نیروی کار:</span>
+                        <span id="print-cost-labor"></span>
+                    </div>
+                    <div class="flex justify-between border-b pb-2 print-border">
+                        <span>انرژی:</span>
+                        <span id="print-cost-energy"></span>
+                    </div>
+                    <div class="flex justify-between border-b pb-2 print-border">
+                        <span>سایر هزینه‌ها:</span>
+                        <span id="print-cost-other"></span>
+                    </div>
+                    <div class="col-span-2 flex justify-between font-bold text-lg mt-4 pt-4 border-t print-border">
+                        <span>هزینه کل فرمول:</span>
+                        <span id="print-cost-total"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center text-gray-500 text-sm border-t pt-4 print-border mt-8">
+                <p>این سند به طور خودکار توسط سیستم SmartFormula ایجاد شده است.</p>
+                <p class="mt-1">www.smartformula.example.com</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA STRUCTURES ---
+        let formulas = [];
+        let products = [];
+        let ingredients = [];
+        let batches = [];
+        let notifications = [];
+        let activities = [];
+        let currentTab = 'formulas';
+        let currentFilters = {
+            category: 'all',
+            status: 'all',
+            complexity: 'all',
+            search: ''
+        };
+        let ingredientCounter = 0;
+        let currentFormulaId = null;
+        let currentProductId = null;
+        let currentIngredientId = null;
+
+        // --- INITIAL DATA ---
+        const initialFormulas = [
+            {
+                id: 'F-001',
+                name: 'کرم مرطوب کننده',
+                code: 'F-001',
+                category: 'cosmetic',
+                description: 'کرم مرطوب کننده برای پوست خشک و حساس',
+                complexity: 'medium',
+                status: 'active',
+                createdAt: new Date('2024-01-15').toISOString(),
+                updatedAt: new Date('2024-01-15').toISOString(),
+                ingredients: [
+                    { id: 'I-001', name: 'آب تصفیه شده', quantity: 70, unit: 'ml', cost: 5000 },
+                    { id: 'I-002', name: 'گلیسیرین', quantity: 15, unit: 'ml', cost: 15000 },
+                    { id: 'I-003', name: 'روغن بادام شیرین', quantity: 10, unit: 'ml', cost: 30000 },
+                    { id: 'I-004', name: 'استارین', quantity: 3, unit: 'gr', cost: 12000 },
+                    { id: 'I-005', name: 'ویتامین E', quantity: 2, unit: 'ml', cost: 25000 }
+                ],
+                production: {
+                    instructions: '۱. آب تصفیه شده و گلیسیرین را مخلوط کنید\n۲. روغن بادام و استارین را جداگانه حرارت دهید\n۳. دو محلول را به آرامی ترکیب کنید\n۴. ویتامین E را در آخر اضافه کنید\n۵. همزدن را تا خنک شدن ادامه دهید',
+                    time: 45,
+                    temperature: 70,
+                    safety: 'medium'
+                },
+                costs: {
+                    materials: 87000,
+                    labor: 20000,
+                    energy: 10000,
+                    other: 5000
+                },
+                totalCost: 122000,
+                yield: 100 // ml
+            },
+            {
+                id: 'F-002',
+                name: 'شامپو ضد شوره',
+                code: 'F-002',
+                category: 'cosmetic',
+                description: 'شامپو مخصوص درمان شوره سر',
+                complexity: 'high',
+                status: 'active',
+                createdAt: new Date('2024-02-10').toISOString(),
+                updatedAt: new Date('2024-02-10').toISOString(),
+                ingredients: [
+                    { id: 'I-006', name: 'آب دیونیزه', quantity: 60, unit: 'ml', cost: 8000 },
+                    { id: 'I-007', name: 'SLS', quantity: 20, unit: 'ml', cost: 25000 },
+                    { id: 'I-008', name: 'پروپیلن گلیکول', quantity: 10, unit: 'ml', cost: 15000 },
+                    { id: 'I-009', name: 'کتوکونازول', quantity: 1, unit: 'gr', cost: 50000 },
+                    { id: 'I-010', name: 'عصاره آلوئه ورا', quantity: 5, unit: 'ml', cost: 30000 }
+                ],
+                production: {
+                    instructions: '۱. آب دیونیزه را گرم کنید\n۲. SLS و پروپیلن گلیکول را اضافه کنید\n۳. کتوکونازول را در دمای ۴۰ درجه حل کنید\n۴. عصاره آلوئه ورا را اضافه کنید\n۵. pH را تنظیم کنید',
+                    time: 60,
+                    temperature: 40,
+                    safety: 'high'
+                },
+                costs: {
+                    materials: 128000,
+                    labor: 25000,
+                    energy: 15000,
+                    other: 7000
+                },
+                totalCost: 175000,
+                yield: 100 // ml
+            },
+            {
+                id: 'F-003',
+                name: 'بیسکویت شکلاتی',
+                code: 'F-003',
+                category: 'food',
+                description: 'بیسکویت شکلاتی خانگی',
+                complexity: 'low',
+                status: 'active',
+                createdAt: new Date('2024-01-20').toISOString(),
+                updatedAt: new Date('2024-01-20').toISOString(),
+                ingredients: [
+                    { id: 'I-011', name: 'آرد گندم', quantity: 200, unit: 'gr', cost: 10000 },
+                    { id: 'I-012', name: 'شکر', quantity: 100, unit: 'gr', cost: 15000 },
+                    { id: 'I-013', name: 'کره', quantity: 120, unit: 'gr', cost: 50000 },
+                    { id: 'I-014', name: 'تخم مرغ', quantity: 2, unit: 'عدد', cost: 10000 },
+                    { id: 'I-015', name: 'شکلات چیپس', quantity: 150, unit: 'gr', cost: 75000 }
+                ],
+                production: {
+                    instructions: '۱. کره و شکر را هم بزنید\n۲. تخم مرغ اضافه کنید\n۳. آرد را اضافه کرده و مخلوط کنید\n۴. شکلات چیپس اضافه کنید\n۵. در فر ۱۸۰ درجه به مدت ۱۵ دقیقه بپزید',
+                    time: 30,
+                    temperature: 180,
+                    safety: 'low'
+                },
+                costs: {
+                    materials: 160000,
+                    labor: 15000,
+                    energy: 20000,
+                    other: 5000
+                },
+                totalCost: 200000,
+                yield: 24 // عدد
+            },
+            {
+                id: 'F-004',
+                name: 'محلول ضدعفونی کننده',
+                code: 'F-004',
+                category: 'chemical',
+                description: 'محلول ضدعفونی سطوح',
+                complexity: 'medium',
+                status: 'pending',
+                createdAt: new Date('2024-03-05').toISOString(),
+                updatedAt: new Date('2024-03-05').toISOString(),
+                ingredients: [
+                    { id: 'I-016', name: 'الکل اتیلیک', quantity: 70, unit: 'ml', cost: 40000 },
+                    { id: 'I-017', name: 'آب مقطر', quantity: 25, unit: 'ml', cost: 5000 },
+                    { id: 'I-018', name: 'گلیسیرین', quantity: 1, unit: 'ml', cost: 2000 },
+                    { id: 'I-019', name: 'پراکسید هیدروژن', quantity: 0.5, unit: 'ml', cost: 3000 },
+                    { id: 'I-020', name: 'اسانس لیمو', quantity: 0.5, unit: 'ml', cost: 10000 }
+                ],
+                production: {
+                    instructions: '۱. الکل و آب مقطر را مخلوط کنید\n۲. گلیسیرین اضافه کنید\n۳. پراکسید هیدروژن را اضافه کنید\n۴. اسانس اضافه کنید\n۵. در ظرف تیره نگهداری کنید',
+                    time: 15,
+                    temperature: 25,
+                    safety: 'medium'
+                },
+                costs: {
+                    materials: 60000,
+                    labor: 8000,
+                    energy: 2000,
+                    other: 2000
+                },
+                totalCost: 72000,
+                yield: 100 // ml
+            }
+        ];
+
+        const initialIngredients = [
+            { id: 'I-001', name: 'آب تصفیه شده', code: 'I-001', unit: 'ml', category: 'chemical', stock: 1000, minStock: 100, cost: 5000, supplier: 'تامین کننده A' },
+            { id: 'I-002', name: 'گلیسیرین', code: 'I-002', unit: 'ml', category: 'chemical', stock: 500, minStock: 50, cost: 15000, supplier: 'تامین کننده B' },
+            { id: 'I-003', name: 'روغن بادام شیرین', code: 'I-003', unit: 'ml', category: 'cosmetic', stock: 200, minStock: 20, cost: 30000, supplier: 'تامین کننده C' },
+            { id: 'I-004', name: 'استارین', code: 'I-004', unit: 'gr', category: 'chemical', stock: 100, minStock: 10, cost: 12000, supplier: 'تامین کننده A' },
+            { id: 'I-005', name: 'ویتامین E', code: 'I-005', unit: 'ml', category: 'pharmaceutical', stock: 50, minStock: 5, cost: 25000, supplier: 'تامین کننده D' },
+            { id: 'I-011', name: 'آرد گندم', code: 'I-011', unit: 'gr', category: 'food', stock: 5000, minStock: 500, cost: 10000, supplier: 'تامین کننده E' },
+            { id: 'I-012', name: 'شکر', code: 'I-012', unit: 'gr', category: 'food', stock: 3000, minStock: 300, cost: 15000, supplier: 'تامین کننده E' },
+            { id: 'I-013', name: 'کره', code: 'I-013', unit: 'gr', category: 'food', stock: 1000, minStock: 100, cost: 50000, supplier: 'تامین کننده F' },
+            { id: 'I-015', name: 'شکلات چیپس', code: 'I-015', unit: 'gr', category: 'food', stock: 2000, minStock: 200, cost: 75000, supplier: 'تامین کننده G' },
+            { id: 'I-016', name: 'الکل اتیلیک', code: 'I-016', unit: 'ml', category: 'chemical', stock: 500, minStock: 50, cost: 40000, supplier: 'تامین کننده H' }
+        ];
+
+        const initialProducts = [
+            { id: 'P-001', name: 'کرم مرطوب کننده 50ml', formulaId: 'F-001', category: 'cosmetic', unit: 'عدد', cost: 61000, price: 120000, sku: 'CRM-50', description: 'کرم مرطوب کننده برای پوست خشک' },
+            { id: 'P-002', name: 'شامپو ضد شوره 200ml', formulaId: 'F-002', category: 'cosmetic', unit: 'عدد', cost: 87500, price: 180000, sku: 'SHP-200', description: 'شامپو مخصوص درمان شوره سر' },
+            { id: 'P-003', name: 'بیسکویت شکلاتی 24عددی', formulaId: 'F-003', category: 'food', unit: 'بسته', cost: 200000, price: 350000, sku: 'BSK-24', description: 'بیسکویت شکلاتی خانگی' },
+            { id: 'P-004', name: 'محلول ضدعفونی 100ml', formulaId: 'F-004', category: 'chemical', unit: 'عدد', cost: 72000, price: 120000, sku: 'DST-100', description: 'محلول ضدعفونی سطوح' }
+        ];
+
+        const initialBatches = [
+            {
+                id: 'B-001',
+                formulaId: 'F-001',
+                formulaName: 'کرم مرطوب کننده',
+                batchNumber: 'B-001',
+                quantity: 10,
+                status: 'completed',
+                date: new Date('2024-02-01').toISOString(),
+                completedAt: new Date('2024-02-01').toISOString(),
+                quality: 95,
+                notes: 'تولید اولیه برای تست کیفیت',
+                cost: 1220000,
+                operator: 'کاربر ۱'
+            },
+            {
+                id: 'B-002',
+                formulaId: 'F-003',
+                formulaName: 'بیسکویت شکلاتی',
+                batchNumber: 'B-002',
+                quantity: 5,
+                status: 'completed',
+                date: new Date('2024-02-15').toISOString(),
+                completedAt: new Date('2024-02-15').toISOString(),
+                quality: 98,
+                notes: 'تولید برای نمایشگاه',
+                cost: 1000000,
+                operator: 'کاربر ۲'
+            },
+            {
+                id: 'B-003',
+                formulaId: 'F-002',
+                formulaName: 'شامپو ضد شوره',
+                batchNumber: 'B-003',
+                quantity: 20,
+                status: 'in_progress',
+                date: new Date().toISOString(),
+                quality: null,
+                notes: 'تولید برای انبار',
+                cost: 3500000,
+                operator: 'کاربر ۱'
+            }
+        ];
+
+        const initialActivities = [
+            { id: 'A-001', type: 'formula_created', title: 'فرمول جدید', description: 'فرمول "کرم مرطوب کننده" ایجاد شد', timestamp: new Date('2024-01-15').toISOString() },
+            { id: 'A-002', type: 'batch_completed', title: 'تولید کامل شد', description: 'بچ B-001 با موفقیت تولید شد', timestamp: new Date('2024-02-01').toISOString() },
+            { id: 'A-003', type: 'ingredient_low', title: 'مواد اولیه کم', description: 'موجودی ویتامین E به حداقل رسید', timestamp: new Date('2024-02-10').toISOString() },
+            { id: 'A-004', type: 'formula_updated', title: 'فرمول به‌روزرسانی شد', description: 'فرمول "شامپو ضد شوره" ویرایش شد', timestamp: new Date('2024-02-12').toISOString() },
+            { id: 'A-005', type: 'batch_started', title: 'تولید شروع شد', description: 'تولید بچ B-003 آغاز شد', timestamp: new Date().toISOString() }
+        ];
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load data from localStorage
+            loadData();
+            
+            // Initialize UI
+            initializeUI();
+            
+            // Load initial data
+            renderFormulas();
+            renderProducts();
+            renderIngredients();
+            renderBatches();
+            renderActivities();
+            updateStats();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Initialize charts
+            initializeCharts();
+            
+            // Check for low stock notifications
+            checkStockLevels();
+        });
+
+        function loadData() {
+            const savedFormulas = localStorage.getItem('smartformula_formulas');
+            const savedProducts = localStorage.getItem('smartformula_products');
+            const savedIngredients = localStorage.getItem('smartformula_ingredients');
+            const savedBatches = localStorage.getItem('smartformula_batches');
+            const savedActivities = localStorage.getItem('smartformula_activities');
+            
+            formulas = savedFormulas ? JSON.parse(savedFormulas) : initialFormulas;
+            products = savedProducts ? JSON.parse(savedProducts) : initialProducts;
+            ingredients = savedIngredients ? JSON.parse(savedIngredients) : initialIngredients;
+            batches = savedBatches ? JSON.parse(savedBatches) : initialBatches;
+            activities = savedActivities ? JSON.parse(savedActivities) : initialActivities;
+            
+            // Check theme
+            const theme = localStorage.getItem('smartformula_theme') || 'dark';
+            applyTheme(theme);
+        }
+
+        function applyTheme(theme) {
+            if (theme === 'light') {
+                document.body.classList.add('light-mode');
+                document.getElementById('theme-icon').className = 'fas fa-sun';
+            } else {
+                document.body.classList.remove('light-mode');
+                document.getElementById('theme-icon').className = 'fas fa-moon';
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('smartformula_formulas', JSON.stringify(formulas));
+            localStorage.setItem('smartformula_products', JSON.stringify(products));
+            localStorage.setItem('smartformula_ingredients', JSON.stringify(ingredients));
+            localStorage.setItem('smartformula_batches', JSON.stringify(batches));
+            localStorage.setItem('smartformula_activities', JSON.stringify(activities));
+        }
+
+        function initializeUI() {
+            // Set today's date for batch production
+            const now = new Date();
+            const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+            document.getElementById('batch-date').value = localDateTime;
+        }
+
+        // --- THEME FUNCTIONS (FIXED) ---
+        function toggleTheme() {
+            const body = document.body;
+            const icon = document.getElementById('theme-icon');
+            
+            if (body.classList.contains('light-mode')) {
+                body.classList.remove('light-mode');
+                icon.className = 'fas fa-moon';
+                localStorage.setItem('smartformula_theme', 'dark');
+            } else {
+                body.classList.add('light-mode');
+                icon.className = 'fas fa-sun';
+                localStorage.setItem('smartformula_theme', 'light');
+            }
+        }
+
+        // --- BACKUP & RESTORE FUNCTIONS ---
+        function toggleBackupMenu() {
+            const menu = document.getElementById('backup-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function backupData() {
+            const backupData = {
+                formulas: formulas,
+                products: products,
+                ingredients: ingredients,
+                batches: batches,
+                activities: activities,
+                timestamp: new Date().toISOString(),
+                version: '1.0'
+            };
+            
+            const dataStr = JSON.stringify(backupData, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `smartformula-backup-${new Date().toISOString().slice(0, 10)}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+            
+            showToast('پشتیبان با موفقیت دریافت شد', 'success');
+            addActivity('backup_created', 'پشتیبان از داده‌ها گرفته شد');
+        }
+
+        function openRestoreModal() {
+            closeModal('backup-menu');
+            openModal('restore-modal');
+        }
+
+        function restoreData() {
+            const fileInput = document.getElementById('backup-file');
+            
+            if (!fileInput.files.length) {
+                showToast('لطفاً فایل پشتیبان را انتخاب کنید', 'error');
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const backupData = JSON.parse(e.target.result);
+                    
+                    // Validate backup data
+                    if (!backupData.formulas || !backupData.products || !backupData.ingredients || !backupData.batches) {
+                        throw new Error('فرمت فایل پشتیبان نامعتبر است');
+                    }
+                    
+                    // Confirm restore
+                    if (confirm('آیا مطمئن هستید که می‌خواهید داده‌های فعلی با فایل پشتیبان جایگزین شوند؟')) {
+                        formulas = backupData.formulas;
+                        products = backupData.products;
+                        ingredients = backupData.ingredients;
+                        batches = backupData.batches;
+                        activities = backupData.activities || [];
+                        
+                        saveData();
+                        
+                        // Update UI
+                        renderFormulas();
+                        renderProducts();
+                        renderIngredients();
+                        renderBatches();
+                        renderActivities();
+                        updateStats();
+                        updateCharts();
+                        
+                        closeModal('restore-modal');
+                        showToast('داده‌ها با موفقیت بازیابی شدند', 'success');
+                        addActivity('data_restored', 'داده‌ها از فایل پشتیبان بازیابی شدند');
+                    }
+                } catch (error) {
+                    showToast('خطا در بازیابی داده‌ها: ' + error.message, 'error');
+                }
+            };
+            
+            reader.readAsText(file);
+        }
+
+        function openResetModal() {
+            closeModal('backup-menu');
+            openModal('reset-modal');
+        }
+
+        function resetData() {
+            const confirmText = document.getElementById('reset-confirm').value;
+            
+            if (confirmText !== 'تایید ریست') {
+                showToast('لطفاً عبارت "تایید ریست" را به درستی وارد کنید', 'error');
+                return;
+            }
+            
+            if (confirm('آیا مطمئن هستید که می‌خواهید تمام داده‌ها را حذف و به حالت اولیه بازگردانید؟ این عمل غیرقابل بازگشت است.')) {
+                // Reset to initial data
+                formulas = [...initialFormulas];
+                products = [...initialProducts];
+                ingredients = [...initialIngredients];
+                batches = [...initialBatches];
+                activities = [...initialActivities];
+                
+                // Clear localStorage
+                localStorage.clear();
+                
+                // Save initial data
+                saveData();
+                
+                // Update UI
+                renderFormulas();
+                renderProducts();
+                renderIngredients();
+                renderBatches();
+                renderActivities();
+                updateStats();
+                updateCharts();
+                
+                closeModal('reset-modal');
+                showToast('داده‌ها با موفقیت به حالت اولیه بازگردانده شدند', 'success');
+                addActivity('data_reset', 'تمام داده‌ها به حالت اولیه بازگردانده شدند');
+            }
+        }
+
+        // --- PRINT FUNCTION (FIXED) ---
+        function printFormula() {
+            const formula = formulas.find(f => f.id === currentFormulaId);
+            if (!formula) return;
+            
+            // Set print template data
+            document.getElementById('print-date').textContent = new Date().toLocaleDateString('fa-IR');
+            document.getElementById('print-formula-name').textContent = formula.name;
+            document.getElementById('print-formula-code').textContent = formula.code;
+            document.getElementById('print-formula-category').textContent = getCategoryName(formula.category);
+            document.getElementById('print-formula-date').textContent = formatDate(formula.createdAt);
+            document.getElementById('print-formula-complexity').textContent = getComplexityName(formula.complexity);
+            document.getElementById('print-formula-description').textContent = formula.description;
+            
+            // Set ingredients
+            const printIngredients = document.getElementById('print-ingredients');
+            printIngredients.innerHTML = '';
+            
+            formula.ingredients.forEach(ing => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="p-2 border print-border">${ing.name}</td>
+                    <td class="p-2 border print-border">${ing.quantity} ${ing.unit}</td>
+                    <td class="p-2 border print-border">${ing.unit}</td>
+                    <td class="p-2 border print-border">${formatCurrency(ing.cost)}</td>
+                    <td class="p-2 border print-border">${Math.round((ing.cost / formula.totalCost) * 100)}%</td>
+                `;
+                printIngredients.appendChild(row);
+            });
+            
+            document.getElementById('print-total-cost').textContent = formatCurrency(formula.costs.materials);
+            
+            // Set production process
+            document.getElementById('print-instructions').textContent = formula.production.instructions;
+            document.getElementById('print-production-time').textContent = `${formula.production.time} دقیقه`;
+            document.getElementById('print-temperature').textContent = formula.production.temperature ? `${formula.production.temperature}°C` : 'دمای محیط';
+            document.getElementById('print-safety').textContent = getSafetyName(formula.production.safety);
+            
+            // Set costs
+            document.getElementById('print-cost-materials').textContent = formatCurrency(formula.costs.materials);
+            document.getElementById('print-cost-labor').textContent = formatCurrency(formula.costs.labor);
+            document.getElementById('print-cost-energy').textContent = formatCurrency(formula.costs.energy);
+            document.getElementById('print-cost-other').textContent = formatCurrency(formula.costs.other);
+            document.getElementById('print-cost-total').textContent = formatCurrency(formula.totalCost);
+            
+            // Show print template and print
+            const printTemplate = document.getElementById('print-template');
+            printTemplate.classList.remove('hidden');
+            
+            setTimeout(() => {
+                window.print();
+                setTimeout(() => {
+                    printTemplate.classList.add('hidden');
+                }, 100);
+            }, 100);
+        }
+
+        // --- MODAL FUNCTIONS ---
+        function toggleNotifications() {
+            const panel = document.getElementById('notification-panel');
+            panel.classList.toggle('hidden');
+        }
+
+        function showLoading() {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading-overlay').classList.add('hidden');
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Update tab styles
+            document.getElementById('tab-formulas').classList.remove('border-blue-500', 'text-blue-400');
+            document.getElementById('tab-products').classList.remove('border-blue-500', 'text-blue-400');
+            document.getElementById('tab-ingredients').classList.remove('border-blue-500', 'text-blue-400');
+            document.getElementById('tab-batches').classList.remove('border-blue-500', 'text-blue-400');
+            document.getElementById('tab-analytics').classList.remove('border-blue-500', 'text-blue-400');
+            
+            document.getElementById('tab-formulas').classList.add('border-transparent', 'text-gray-400');
+            document.getElementById('tab-products').classList.add('border-transparent', 'text-gray-400');
+            document.getElementById('tab-ingredients').classList.add('border-transparent', 'text-gray-400');
+            document.getElementById('tab-batches').classList.add('border-transparent', 'text-gray-400');
+            document.getElementById('tab-analytics').classList.add('border-transparent', 'text-gray-400');
+            
+            document.getElementById(`tab-${tab}`).classList.remove('border-transparent', 'text-gray-400');
+            document.getElementById(`tab-${tab}`).classList.add('border-blue-500', 'text-blue-400');
+            
+            // Show/hide content
+            document.getElementById('tab-formulas-content').classList.add('hidden');
+            document.getElementById('tab-products-content').classList.add('hidden');
+            document.getElementById('tab-ingredients-content').classList.add('hidden');
+            document.getElementById('tab-batches-content').classList.add('hidden');
+            document.getElementById('tab-analytics-content').classList.add('hidden');
+            
+            document.getElementById(`tab-${tab}-content`).classList.remove('hidden');
+            
+            if (tab === 'analytics') {
+                updateCharts();
+            }
+        }
+
+        function applyFilters() {
+            currentFilters.category = document.getElementById('category-filter').value;
+            currentFilters.status = document.getElementById('status-filter').value;
+            currentFilters.complexity = document.getElementById('complexity-filter').value;
+            
+            renderFormulas();
+            showToast('فیلترها اعمال شدند', 'success');
+        }
+
+        function resetFilters() {
+            document.getElementById('category-filter').value = 'all';
+            document.getElementById('status-filter').value = 'all';
+            document.getElementById('complexity-filter').value = 'all';
+            document.getElementById('formula-search').value = '';
+            
+            currentFilters = {
+                category: 'all',
+                status: 'all',
+                complexity: 'all',
+                search: ''
+            };
+            
+            renderFormulas();
+            showToast('فیلترها پاک شدند', 'success');
+        }
+
+        // --- FORMULA MANAGEMENT ---
+        function renderFormulas() {
+            const searchTerm = document.getElementById('formula-search').value.toLowerCase();
+            currentFilters.search = searchTerm;
+            
+            const filteredFormulas = formulas.filter(formula => {
+                // Category filter
+                if (currentFilters.category !== 'all' && formula.category !== currentFilters.category) {
+                    return false;
+                }
+                
+                // Status filter
+                if (currentFilters.status !== 'all' && formula.status !== currentFilters.status) {
+                    return false;
+                }
+                
+                // Complexity filter
+                if (currentFilters.complexity !== 'all' && formula.complexity !== currentFilters.complexity) {
+                    return false;
+                }
+                
+                // Search filter
+                if (searchTerm && !formula.name.toLowerCase().includes(searchTerm) && 
+                    !formula.code.toLowerCase().includes(searchTerm) &&
+                    !formula.description.toLowerCase().includes(searchTerm)) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            const formulasGrid = document.getElementById('formulas-grid');
+            const emptyState = document.getElementById('formulas-empty');
+            
+            if (filteredFormulas.length === 0) {
+                formulasGrid.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+            
+            formulasGrid.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            
+            // Sort formulas
+            const sortBy = document.getElementById('sort-formulas').value;
+            filteredFormulas.sort((a, b) => {
+                switch (sortBy) {
+                    case 'newest':
+                        return new Date(b.createdAt) - new Date(a.createdAt);
+                    case 'oldest':
+                        return new Date(a.createdAt) - new Date(b.createdAt);
+                    case 'name':
+                        return a.name.localeCompare(b.name, 'fa');
+                    case 'cost':
+                        return a.totalCost - b.totalCost;
+                    case 'complexity':
+                        const complexityOrder = { high: 3, medium: 2, low: 1 };
+                        return complexityOrder[b.complexity] - complexityOrder[a.complexity];
+                    default:
+                        return 0;
+                }
+            });
+            
+            // Render formulas
+            formulasGrid.innerHTML = '';
+            filteredFormulas.forEach(formula => {
+                const formulaCard = createFormulaCard(formula);
+                formulasGrid.appendChild(formulaCard);
+            });
+        }
+
+        function createFormulaCard(formula) {
+            const card = document.createElement('div');
+            card.className = `formula-card bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-5 border border-gray-700 shadow-lg fade-in ${formula.category}`;
+            
+            // Calculate cost per unit
+            const costPerUnit = Math.round(formula.totalCost / formula.yield);
+            
+            card.innerHTML = `
+                <div class="flex justify-between items-start mb-4">
+                    <div>
+                        <div class="flex items-center mb-2">
+                            <span class="px-3 py-1 rounded-lg text-xs font-bold ${getCategoryClass(formula.category)} mr-2">
+                                ${getCategoryName(formula.category)}
+                            </span>
+                            <span class="px-3 py-1 rounded-lg text-xs font-bold complexity-${formula.complexity}">
+                                ${getComplexityName(formula.complexity)}
+                            </span>
+                        </div>
+                        <h3 class="font-bold text-lg">${formula.name}</h3>
+                        <p class="text-gray-400 text-sm mt-1">${formula.code}</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-lg text-xs font-bold status-${formula.status}">
+                        ${getStatusName(formula.status)}
+                    </span>
+                </div>
+                
+                <p class="text-gray-300 text-sm mb-4 line-clamp-2">${formula.description}</p>
+                
+                <div class="mb-4">
+                    <div class="text-xs text-gray-400 mb-1">مواد اولیه</div>
+                    <div class="flex flex-wrap gap-1">
+                        ${formula.ingredients.slice(0, 3).map(ing => `
+                            <span class="px-2 py-1 bg-gray-700 rounded text-xs">${ing.name}</span>
+                        `).join('')}
+                        ${formula.ingredients.length > 3 ? `<span class="px-2 py-1 bg-gray-700 rounded text-xs">+${formula.ingredients.length - 3}</span>` : ''}
+                    </div>
+                </div>
+                
+                <div class="flex justify-between items-center pt-4 border-t border-gray-700">
+                    <div>
+                        <div class="text-xs text-gray-400">هزینه</div>
+                        <div class="font-bold ${getCostClass(costPerUnit)}">${formatCurrency(costPerUnit)}</div>
+                    </div>
+                    <div>
+                        <div class="text-xs text-gray-400">بازدهی</div>
+                        <div class="font-bold">${formula.yield} واحد</div>
+                    </div>
+                    <div class="flex space-x-2 space-x-reverse">
+                        <button onclick="viewFormulaDetail('${formula.id}')" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-xl">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button onclick="editFormulaFromCard('${formula.id}')" class="px-3 py-2 bg-green-600 hover:bg-green-700 rounded-xl">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        function openNewFormulaModal() {
+            currentFormulaId = null;
+            
+            // Reset form
+            document.getElementById('formula-name').value = '';
+            document.getElementById('formula-code').value = '';
+            document.getElementById('formula-description').value = '';
+            document.getElementById('production-instructions').value = '';
+            document.getElementById('production-time').value = '60';
+            document.getElementById('production-temperature').value = '25';
+            document.getElementById('ingredients-table').innerHTML = '';
+            document.getElementById('total-ingredients-cost').textContent = '0 ریال';
+            document.getElementById('total-formula-cost').textContent = '0 ریال';
+            document.getElementById('labor-cost').value = '0';
+            document.getElementById('energy-cost').value = '0';
+            document.getElementById('other-costs').value = '0';
+            
+            // Add first ingredient row
+            addIngredientRow();
+            
+            openModal('new-formula-modal');
+        }
+
+        function addIngredientRow() {
+            const table = document.getElementById('ingredients-table');
+            const rowId = `ingredient-${ingredientCounter++}`;
+            
+            const row = document.createElement('tr');
+            row.id = rowId;
+            row.className = 'ingredient-row';
+            row.innerHTML = `
+                <td class="p-2">
+                    <select onchange="updateIngredientCost('${rowId}')" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-sm">
+                        <option value="">انتخاب ماده اولیه</option>
+                        ${ingredients.map(ing => `
+                            <option value="${ing.id}" data-cost="${ing.cost}" data-unit="${ing.unit}">${ing.name} (${ing.code})</option>
+                        `).join('')}
+                    </select>
+                </td>
+                <td class="p-2">
+                    <input type="number" onchange="updateIngredientCost('${rowId}')" class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-sm" value="0" step="0.01" min="0">
+                </td>
+                <td class="p-2">
+                    <input type="text" readonly class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-sm unit-display">
+                </td>
+                <td class="p-2">
+                    <input type="number" readonly class="w-full bg-gray-700 border border-gray-600 rounded-lg p-2 text-sm cost-display" value="0">
+                </td>
+                <td class="p-2">
+                    <button onclick="removeIngredientRow('${rowId}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-lg text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </td>
+            `;
+            
+            table.appendChild(row);
+            updateTotalCost();
+        }
+
+        function removeIngredientRow(rowId) {
+            const row = document.getElementById(rowId);
+            if (row) {
+                row.remove();
+                updateTotalCost();
+            }
+        }
+
+        function updateIngredientCost(rowId) {
+            const row = document.getElementById(rowId);
+            if (!row) return;
+            
+            const select = row.querySelector('select');
+            const quantityInput = row.querySelector('input[type="number"]');
+            const unitDisplay = row.querySelector('.unit-display');
+            const costDisplay = row.querySelector('.cost-display');
+            
+            const selectedOption = select.options[select.selectedIndex];
+            if (selectedOption && selectedOption.value) {
+                const cost = parseFloat(selectedOption.dataset.cost) || 0;
+                const unit = selectedOption.dataset.unit || '';
+                const quantity = parseFloat(quantityInput.value) || 0;
+                
+                unitDisplay.value = unit;
+                costDisplay.value = cost * quantity;
+            } else {
+                unitDisplay.value = '';
+                costDisplay.value = 0;
+            }
+            
+            updateTotalCost();
+        }
+
+        function updateTotalCost() {
+            // Calculate materials cost
+            let materialsCost = 0;
+            document.querySelectorAll('.cost-display').forEach(input => {
+                materialsCost += parseFloat(input.value) || 0;
+            });
+            
+            // Get additional costs
+            const laborCost = parseFloat(document.getElementById('labor-cost').value) || 0;
+            const energyCost = parseFloat(document.getElementById('energy-cost').value) || 0;
+            const otherCosts = parseFloat(document.getElementById('other-costs').value) || 0;
+            
+            // Calculate total
+            const totalCost = materialsCost + laborCost + energyCost + otherCosts;
+            
+            // Update displays
+            document.getElementById('total-ingredients-cost').textContent = formatCurrency(materialsCost);
+            document.getElementById('total-formula-cost').textContent = formatCurrency(totalCost);
+        }
+
+        function saveFormula() {
+            const name = document.getElementById('formula-name').value.trim();
+            const code = document.getElementById('formula-code').value.trim();
+            const category = document.getElementById('formula-category').value;
+            const description = document.getElementById('formula-description').value.trim();
+            const complexity = document.getElementById('formula-complexity').value;
+            
+            if (!name || !code) {
+                showToast('لطفاً نام و کد فرمول را وارد کنید', 'error');
+                return;
+            }
+            
+            // Check if code already exists
+            if (formulas.some(f => f.code === code && f.id !== currentFormulaId)) {
+                showToast('کد فرمول تکراری است', 'error');
+                return;
+            }
+            
+            // Collect ingredients
+            const formulaIngredients = [];
+            let totalMaterialsCost = 0;
+            
+            document.querySelectorAll('.ingredient-row').forEach(row => {
+                const select = row.querySelector('select');
+                const selectedOption = select.options[select.selectedIndex];
+                
+                if (selectedOption && selectedOption.value) {
+                    const ingredientId = selectedOption.value;
+                    const ingredientName = selectedOption.text.split(' (')[0];
+                    const quantity = parseFloat(row.querySelector('input[type="number"]').value) || 0;
+                    const unit = row.querySelector('.unit-display').value;
+                    const cost = parseFloat(row.querySelector('.cost-display').value) || 0;
+                    
+                    if (quantity > 0) {
+                        formulaIngredients.push({
+                            id: ingredientId,
+                            name: ingredientName,
+                            quantity: quantity,
+                            unit: unit,
+                            cost: cost
+                        });
+                        totalMaterialsCost += cost;
+                    }
+                }
+            });
+            
+            if (formulaIngredients.length === 0) {
+                showToast('لطفاً حداقل یک ماده اولیه اضافه کنید', 'error');
+                return;
+            }
+            
+            // Collect production data
+            const production = {
+                instructions: document.getElementById('production-instructions').value.trim(),
+                time: parseInt(document.getElementById('production-time').value) || 0,
+                temperature: parseInt(document.getElementById('production-temperature').value) || 25,
+                safety: document.getElementById('production-safety').value
+            };
+            
+            // Collect costs
+            const laborCost = parseFloat(document.getElementById('labor-cost').value) || 0;
+            const energyCost = parseFloat(document.getElementById('energy-cost').value) || 0;
+            const otherCosts = parseFloat(document.getElementById('other-costs').value) || 0;
+            const totalCost = totalMaterialsCost + laborCost + energyCost + otherCosts;
+            
+            const formulaData = {
+                id: currentFormulaId || `F-${Date.now()}`,
+                name,
+                code,
+                category,
+                description,
+                complexity,
+                status: 'active',
+                createdAt: currentFormulaId ? new Date().toISOString() : new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                ingredients: formulaIngredients,
+                production,
+                costs: {
+                    materials: totalMaterialsCost,
+                    labor: laborCost,
+                    energy: energyCost,
+                    other: otherCosts
+                },
+                totalCost,
+                yield: 100 // Default yield
+            };
+            
+            if (currentFormulaId) {
+                // Update existing formula
+                const index = formulas.findIndex(f => f.id === currentFormulaId);
+                if (index !== -1) {
+                    formulas[index] = { ...formulas[index], ...formulaData };
+                }
+                showToast('فرمول با موفقیت به‌روزرسانی شد', 'success');
+                addActivity('formula_updated', `فرمول "${name}" ویرایش شد`);
+            } else {
+                // Add new formula
+                formulas.push(formulaData);
+                showToast('فرمول جدید با موفقیت ایجاد شد', 'success');
+                addActivity('formula_created', `فرمول "${name}" ایجاد شد`);
+            }
+            
+            saveData();
+            closeModal('new-formula-modal');
+            renderFormulas();
+            updateStats();
+            currentFormulaId = null;
+        }
+
+        function viewFormulaDetail(formulaId) {
+            const formula = formulas.find(f => f.id === formulaId);
+            if (!formula) return;
+            
+            currentFormulaId = formulaId;
+            
+            // Update basic info
+            document.getElementById('detail-formula-name').textContent = formula.name;
+            document.getElementById('detail-formula-code').textContent = formula.code;
+            document.getElementById('detail-category').innerHTML = `<span class="${getCategoryClass(formula.category)} px-3 py-1 rounded-lg">${getCategoryName(formula.category)}</span>`;
+            document.getElementById('detail-complexity').innerHTML = `<span class="complexity-${formula.complexity} px-3 py-1 rounded-lg">${getComplexityName(formula.complexity)}</span>`;
+            document.getElementById('detail-status').innerHTML = `<span class="status-${formula.status} px-3 py-1 rounded-lg">${getStatusName(formula.status)}</span>`;
+            document.getElementById('detail-created-at').textContent = formatDate(formula.createdAt);
+            document.getElementById('detail-description').textContent = formula.description;
+            
+            // Update ingredients
+            const ingredientsTable = document.getElementById('detail-ingredients');
+            ingredientsTable.innerHTML = '';
+            
+            let totalCost = 0;
+            formula.ingredients.forEach(ing => {
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-700';
+                row.innerHTML = `
+                    <td class="p-3">${ing.name}</td>
+                    <td class="p-3">${ing.quantity} ${ing.unit}</td>
+                    <td class="p-3">${formatCurrency(ing.cost)}</td>
+                    <td class="p-3">${Math.round((ing.cost / formula.totalCost) * 100)}%</td>
+                `;
+                ingredientsTable.appendChild(row);
+                totalCost += ing.cost;
+            });
+            
+            document.getElementById('detail-total-cost').textContent = formatCurrency(totalCost);
+            
+            // Update production info
+            document.getElementById('detail-instructions').textContent = formula.production.instructions;
+            document.getElementById('detail-production-time').textContent = `${formula.production.time} دقیقه`;
+            document.getElementById('detail-temperature').textContent = formula.production.temperature ? `${formula.production.temperature}°C` : 'دمای محیط';
+            document.getElementById('detail-safety').innerHTML = `<span class="safety-${formula.production.safety} px-3 py-1 rounded-lg">${getSafetyName(formula.production.safety)}</span>`;
+            
+            // Update costs
+            document.getElementById('cost-materials').textContent = formatCurrency(formula.costs.materials);
+            document.getElementById('cost-labor').textContent = formatCurrency(formula.costs.labor);
+            document.getElementById('cost-energy').textContent = formatCurrency(formula.costs.energy);
+            document.getElementById('cost-other').textContent = formatCurrency(formula.costs.other);
+            document.getElementById('cost-total').textContent = formatCurrency(formula.totalCost);
+            
+            // Update related products
+            const relatedProducts = products.filter(p => p.formulaId === formulaId);
+            const relatedProductsDiv = document.getElementById('related-products');
+            
+            if (relatedProducts.length === 0) {
+                relatedProductsDiv.innerHTML = '<p class="text-gray-400 text-sm">هیچ محصولی برای این فرمول تعریف نشده است</p>';
+            } else {
+                relatedProductsDiv.innerHTML = relatedProducts.map(p => `
+                    <div class="flex items-center justify-between p-2 bg-gray-700/50 rounded-lg">
+                        <div>
+                            <div class="font-medium">${p.name}</div>
+                            <div class="text-xs text-gray-400">${p.sku}</div>
+                        </div>
+                        <div class="text-green-400 font-bold">${formatCurrency(p.cost)}</div>
+                    </div>
+                `).join('');
+            }
+            
+            openModal('formula-detail-modal');
+        }
+
+        function editFormula() {
+            const formula = formulas.find(f => f.id === currentFormulaId);
+            if (!formula) return;
+            
+            // Populate form
+            document.getElementById('formula-name').value = formula.name;
+            document.getElementById('formula-code').value = formula.code;
+            document.getElementById('formula-category').value = formula.category;
+            document.getElementById('formula-description').value = formula.description;
+            document.getElementById('formula-complexity').value = formula.complexity;
+            document.getElementById('production-instructions').value = formula.production.instructions;
+            document.getElementById('production-time').value = formula.production.time;
+            document.getElementById('production-temperature').value = formula.production.temperature;
+            document.getElementById('production-safety').value = formula.production.safety;
+            document.getElementById('labor-cost').value = formula.costs.labor;
+            document.getElementById('energy-cost').value = formula.costs.energy;
+            document.getElementById('other-costs').value = formula.costs.other;
+            
+            // Clear ingredients table
+            const ingredientsTable = document.getElementById('ingredients-table');
+            ingredientsTable.innerHTML = '';
+            
+            // Add ingredients
+            formula.ingredients.forEach((ing, index) => {
+                addIngredientRow();
+                const row = document.getElementById(`ingredient-${index}`);
+                const select = row.querySelector('select');
+                const quantityInput = row.querySelector('input[type="number"]');
+                
+                // Find ingredient
+                const ingredient = ingredients.find(i => i.id === ing.id);
+                if (ingredient) {
+                    select.value = ingredient.id;
+                    quantityInput.value = ing.quantity;
+                    updateIngredientCost(`ingredient-${index}`);
+                }
+            });
+            
+            updateTotalCost();
+            
+            closeModal('formula-detail-modal');
+            openModal('new-formula-modal');
+        }
+
+        function editFormulaFromCard(formulaId) {
+            currentFormulaId = formulaId;
+            editFormula();
+        }
+
+        function duplicateFormula() {
+            const formula = formulas.find(f => f.id === currentFormulaId);
+            if (!formula) return;
+            
+            // Create a copy with new ID
+            const newCode = `F-${String(formulas.length + 1).padStart(3, '0')}`;
+            const newFormula = {
+                ...JSON.parse(JSON.stringify(formula)),
+                id: newCode,
+                code: newCode,
+                name: `${formula.name} (کپی)`,
+                status: 'draft',
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+            
+            formulas.push(newFormula);
+            saveData();
+            
+            closeModal('formula-detail-modal');
+            renderFormulas();
+            showToast('فرمول با موفقیت کپی شد', 'success');
+            addActivity('formula_created', `فرمول "${newFormula.name}" ایجاد شد`);
+        }
+
+        function archiveFormula() {
+            const formula = formulas.find(f => f.id === currentFormulaId);
+            if (!formula) return;
+            
+            formula.status = 'archived';
+            saveData();
+            
+            closeModal('formula-detail-modal');
+            renderFormulas();
+            showToast('فرمول بایگانی شد', 'success');
+            addActivity('formula_archived', `فرمول "${formula.name}" بایگانی شد`);
+        }
+
+        // --- PRODUCT MANAGEMENT (COMPLETED) ---
+        function renderProducts() {
+            const productsTable = document.getElementById('products-table');
+            productsTable.innerHTML = '';
+            
+            products.forEach(product => {
+                const formula = formulas.find(f => f.id === product.formulaId);
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-800';
+                row.innerHTML = `
+                    <td class="p-4">
+                        <div class="font-medium">${product.name}</div>
+                        <div class="text-xs text-gray-400">${product.sku}</div>
+                    </td>
+                    <td class="p-4">
+                        <span class="${getCategoryClass(product.category)} px-3 py-1 rounded-lg text-xs">
+                            ${getCategoryName(product.category)}
+                        </span>
+                    </td>
+                    <td class="p-4">${formula ? formula.name : 'نامشخص'}</td>
+                    <td class="p-4">${product.unit}</td>
+                    <td class="p-4 ${getCostClass(product.cost)} font-bold">${formatCurrency(product.cost)}</td>
+                    <td class="p-4">
+                        <div class="flex space-x-2 space-x-reverse">
+                            <button onclick="editProduct('${product.id}')" class="px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteProduct('${product.id}')" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded-lg">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                productsTable.appendChild(row);
+            });
+        }
+
+        function openNewProductModal() {
+            currentProductId = null;
+            
+            // Reset form
+            document.getElementById('product-name').value = '';
+            document.getElementById('product-sku').value = '';
+            document.getElementById('product-unit').value = '';
+            document.getElementById('product-price').value = '0';
+            document.getElementById('product-description').value = '';
+            
+            // Load formulas into select
+            const formulaSelect = document.getElementById('product-formula');
+            formulaSelect.innerHTML = '<option value="">انتخاب فرمول</option>';
+            formulas.filter(f => f.status === 'active').forEach(formula => {
+                const option = document.createElement('option');
+                option.value = formula.id;
+                option.textContent = `${formula.name} (${formula.code})`;
+                formulaSelect.appendChild(option);
+            });
+            
+            openModal('new-product-modal');
+        }
+
+        function saveProduct() {
+            const name = document.getElementById('product-name').value.trim();
+            const sku = document.getElementById('product-sku').value.trim();
+            const formulaId = document.getElementById('product-formula').value;
+            const category = document.getElementById('product-category').value;
+            const unit = document.getElementById('product-unit').value.trim();
+            const price = parseFloat(document.getElementById('product-price').value) || 0;
+            const description = document.getElementById('product-description').value.trim();
+            
+            if (!name || !sku || !formulaId) {
+                showToast('لطفاً نام، SKU و فرمول محصول را وارد کنید', 'error');
+                return;
+            }
+            
+            // Check if SKU already exists
+            if (products.some(p => p.sku === sku && p.id !== currentProductId)) {
+                showToast('SKU محصول تکراری است', 'error');
+                return;
+            }
+            
+            // Get formula cost
+            const formula = formulas.find(f => f.id === formulaId);
+            if (!formula) {
+                showToast('فرمول انتخاب شده یافت نشد', 'error');
+                return;
+            }
+            
+            const cost = formula.totalCost;
+            
+            const productData = {
+                id: currentProductId || `P-${Date.now()}`,
+                name,
+                sku,
+                formulaId,
+                category,
+                unit,
+                cost,
+                price,
+                description
+            };
+            
+            if (currentProductId) {
+                // Update existing product
+                const index = products.findIndex(p => p.id === currentProductId);
+                if (index !== -1) {
+                    products[index] = { ...products[index], ...productData };
+                }
+                showToast('محصول با موفقیت به‌روزرسانی شد', 'success');
+                addActivity('product_updated', `محصول "${name}" ویرایش شد`);
+            } else {
+                // Add new product
+                products.push(productData);
+                showToast('محصول جدید با موفقیت ایجاد شد', 'success');
+                addActivity('product_created', `محصول "${name}" ایجاد شد`);
+            }
+            
+            saveData();
+            closeModal('new-product-modal');
+            renderProducts();
+            updateStats();
+            currentProductId = null;
+        }
+
+        function editProduct(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            
+            currentProductId = productId;
+            
+            // Populate form
+            document.getElementById('product-name').value = product.name;
+            document.getElementById('product-sku').value = product.sku;
+            document.getElementById('product-unit').value = product.unit;
+            document.getElementById('product-price').value = product.price;
+            document.getElementById('product-description').value = product.description || '';
+            
+            // Load formulas into select
+            const formulaSelect = document.getElementById('product-formula');
+            formulaSelect.innerHTML = '<option value="">انتخاب فرمول</option>';
+            formulas.filter(f => f.status === 'active').forEach(formula => {
+                const option = document.createElement('option');
+                option.value = formula.id;
+                option.textContent = `${formula.name} (${formula.code})`;
+                option.selected = formula.id === product.formulaId;
+                formulaSelect.appendChild(option);
+            });
+            
+            // Set category
+            document.getElementById('product-category').value = product.category;
+            
+            openModal('new-product-modal');
+        }
+
+        function deleteProduct(productId) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            
+            if (confirm(`آیا مطمئن هستید که می‌خواهید محصول "${product.name}" را حذف کنید؟`)) {
+                products = products.filter(p => p.id !== productId);
+                saveData();
+                renderProducts();
+                updateStats();
+                showToast('محصول با موفقیت حذف شد', 'success');
+                addActivity('product_deleted', `محصول "${product.name}" حذف شد`);
+            }
+        }
+
+        // --- INGREDIENT MANAGEMENT (COMPLETED) ---
+        function renderIngredients() {
+            const ingredientsGrid = document.getElementById('ingredients-grid');
+            ingredientsGrid.innerHTML = '';
+            
+            ingredients.forEach(ingredient => {
+                const card = document.createElement('div');
+                card.className = 'bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-5 border border-gray-700 shadow-lg fade-in';
+                
+                // Calculate stock status
+                const stockPercentage = (ingredient.stock / ingredient.minStock) * 100;
+                let stockClass = 'text-green-400';
+                let stockText = 'کافی';
+                
+                if (stockPercentage <= 30) {
+                    stockClass = 'text-red-400';
+                    stockText = 'کمبود شدید';
+                } else if (stockPercentage <= 70) {
+                    stockClass = 'text-yellow-400';
+                    stockText = 'کمبود';
+                }
+                
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="px-3 py-1 rounded-lg text-xs font-bold ${getCategoryClass(ingredient.category)}">
+                                ${getCategoryName(ingredient.category)}
+                            </span>
+                        </div>
+                        <span class="text-xs text-gray-400">${ingredient.code}</span>
+                    </div>
+                    
+                    <h3 class="font-bold text-lg mb-2">${ingredient.name}</h3>
+                    
+                    <div class="space-y-3 mb-4">
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">موجودی:</span>
+                            <span class="font-bold">${ingredient.stock} ${ingredient.unit}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">حداقل موجودی:</span>
+                            <span class="font-bold">${ingredient.minStock} ${ingredient.unit}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">هزینه واحد:</span>
+                            <span class="font-bold text-green-400">${formatCurrency(ingredient.cost)}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-400">تامین کننده:</span>
+                            <span class="font-bold">${ingredient.supplier}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>وضعیت موجودی</span>
+                            <span class="${stockClass} font-bold">${stockText}</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: ${Math.min(stockPercentage, 100)}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-2 space-x-reverse">
+                        <button onclick="editIngredient('${ingredient.id}')" class="flex-1 py-2 bg-blue-600 hover:bg-blue-700 rounded-xl text-sm">
+                            <i class="fas fa-edit ml-1"></i>
+                            ویرایش
+                        </button>
+                        <button onclick="orderIngredient('${ingredient.id}')" class="flex-1 py-2 bg-green-600 hover:bg-green-700 rounded-xl text-sm">
+                            <i class="fas fa-cart-plus ml-1"></i>
+                            سفارش
+                        </button>
+                    </div>
+                `;
+                
+                ingredientsGrid.appendChild(card);
+            });
+        }
+
+        function openNewIngredientModal() {
+            currentIngredientId = null;
+            
+            // Reset form
+            document.getElementById('ingredient-name').value = '';
+            document.getElementById('ingredient-code').value = '';
+            document.getElementById('ingredient-unit').value = '';
+            document.getElementById('ingredient-cost').value = '0';
+            document.getElementById('ingredient-stock').value = '0';
+            document.getElementById('ingredient-min-stock').value = '10';
+            document.getElementById('ingredient-supplier').value = '';
+            document.getElementById('ingredient-description').value = '';
+            
+            openModal('new-ingredient-modal');
+        }
+
+        function saveIngredient() {
+            const name = document.getElementById('ingredient-name').value.trim();
+            const code = document.getElementById('ingredient-code').value.trim();
+            const category = document.getElementById('ingredient-category').value;
+            const unit = document.getElementById('ingredient-unit').value.trim();
+            const cost = parseFloat(document.getElementById('ingredient-cost').value) || 0;
+            const stock = parseFloat(document.getElementById('ingredient-stock').value) || 0;
+            const minStock = parseFloat(document.getElementById('ingredient-min-stock').value) || 10;
+            const supplier = document.getElementById('ingredient-supplier').value.trim();
+            const description = document.getElementById('ingredient-description').value.trim();
+            
+            if (!name || !code) {
+                showToast('لطفاً نام و کد ماده اولیه را وارد کنید', 'error');
+                return;
+            }
+            
+            // Check if code already exists
+            if (ingredients.some(i => i.code === code && i.id !== currentIngredientId)) {
+                showToast('کد ماده اولیه تکراری است', 'error');
+                return;
+            }
+            
+            const ingredientData = {
+                id: currentIngredientId || `I-${Date.now()}`,
+                name,
+                code,
+                category,
+                unit,
+                cost,
+                stock,
+                minStock,
+                supplier,
+                description
+            };
+            
+            if (currentIngredientId) {
+                // Update existing ingredient
+                const index = ingredients.findIndex(i => i.id === currentIngredientId);
+                if (index !== -1) {
+                    ingredients[index] = { ...ingredients[index], ...ingredientData };
+                }
+                showToast('ماده اولیه با موفقیت به‌روزرسانی شد', 'success');
+                addActivity('ingredient_updated', `ماده اولیه "${name}" ویرایش شد`);
+            } else {
+                // Add new ingredient
+                ingredients.push(ingredientData);
+                showToast('ماده اولیه جدید با موفقیت ایجاد شد', 'success');
+                addActivity('ingredient_created', `ماده اولیه "${name}" ایجاد شد`);
+            }
+            
+            saveData();
+            closeModal('new-ingredient-modal');
+            renderIngredients();
+            updateStats();
+            currentIngredientId = null;
+        }
+
+        function editIngredient(ingredientId) {
+            const ingredient = ingredients.find(i => i.id === ingredientId);
+            if (!ingredient) return;
+            
+            currentIngredientId = ingredientId;
+            
+            // Populate form
+            document.getElementById('ingredient-name').value = ingredient.name;
+            document.getElementById('ingredient-code').value = ingredient.code;
+            document.getElementById('ingredient-category').value = ingredient.category;
+            document.getElementById('ingredient-unit').value = ingredient.unit;
+            document.getElementById('ingredient-cost').value = ingredient.cost;
+            document.getElementById('ingredient-stock').value = ingredient.stock;
+            document.getElementById('ingredient-min-stock').value = ingredient.minStock;
+            document.getElementById('ingredient-supplier').value = ingredient.supplier || '';
+            document.getElementById('ingredient-description').value = ingredient.description || '';
+            
+            openModal('new-ingredient-modal');
+        }
+
+        function orderIngredient(ingredientId) {
+            const ingredient = ingredients.find(i => i.id === ingredientId);
+            if (!ingredient) return;
+            
+            const quantity = prompt(`چه مقدار از "${ingredient.name}" سفارش می‌دهید؟ (${ingredient.unit})`, "100");
+            if (quantity === null) return;
+            
+            const quantityNum = parseFloat(quantity);
+            if (isNaN(quantityNum) || quantityNum <= 0) {
+                showToast('مقدار وارد شده نامعتبر است', 'error');
+                return;
+            }
+            
+            ingredient.stock += quantityNum;
+            saveData();
+            renderIngredients();
+            showToast(`موجودی ${ingredient.name} به ${ingredient.stock} ${ingredient.unit} افزایش یافت`, 'success');
+            addActivity('ingredient_ordered', `${quantityNum} ${ingredient.unit} از ماده "${ingredient.name}" سفارش داده شد`);
+        }
+
+        // --- BATCH PRODUCTION (COMPLETED) ---
+        function renderBatches() {
+            const batchesList = document.getElementById('batches-list');
+            batchesList.innerHTML = '';
+            
+            // Sort batches by date (newest first)
+            const sortedBatches = [...batches].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedBatches.forEach(batch => {
+                const batchCard = document.createElement('div');
+                batchCard.className = 'bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl p-5 border border-gray-700 shadow-lg fade-in';
+                
+                let statusColor = 'bg-blue-500';
+                let statusText = 'در حال تولید';
+                
+                if (batch.status === 'completed') {
+                    statusColor = 'bg-green-500';
+                    statusText = 'تکمیل شده';
+                } else if (batch.status === 'failed') {
+                    statusColor = 'bg-red-500';
+                    statusText = 'ناموفق';
+                }
+                
+                batchCard.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <div class="flex items-center mb-2">
+                                <span class="px-3 py-1 rounded-lg text-xs font-bold ${statusColor} mr-2">
+                                    ${statusText}
+                                </span>
+                                <span class="text-gray-400 text-sm">${batch.batchNumber}</span>
+                            </div>
+                            <h3 class="font-bold text-lg">${batch.formulaName}</h3>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-gray-400 text-sm">تاریخ تولید</div>
+                            <div class="font-bold">${formatDate(batch.date)}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        <div>
+                            <div class="text-gray-400 text-sm">تعداد</div>
+                            <div class="font-bold">${batch.quantity} واحد</div>
+                        </div>
+                        <div>
+                            <div class="text-gray-400 text-sm">هزینه کل</div>
+                            <div class="font-bold text-green-400">${formatCurrency(batch.cost)}</div>
+                        </div>
+                        <div>
+                            <div class="text-gray-400 text-sm">اپراتور</div>
+                            <div class="font-bold">${batch.operator}</div>
+                        </div>
+                        <div>
+                            <div class="text-gray-400 text-sm">کیفیت</div>
+                            <div class="font-bold">${batch.quality ? `${batch.quality}%` : '---'}</div>
+                        </div>
+                    </div>
+                    
+                    ${batch.notes ? `
+                        <div class="mb-4">
+                            <div class="text-gray-400 text-sm mb-1">یادداشت</div>
+                            <div class="text-gray-300">${batch.notes}</div>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="flex space-x-2 space-x-reverse">
+                        <button onclick="viewBatchDetails('${batch.id}')" class="flex-1 py-2 bg-blue-600 hover:bg-blue-700 rounded-xl">
+                            <i class="fas fa-eye ml-1"></i>
+                            مشاهده جزئیات
+                        </button>
+                        ${batch.status === 'in_progress' ? `
+                            <button onclick="completeBatch('${batch.id}')" class="flex-1 py-2 bg-green-600 hover:bg-green-700 rounded-xl">
+                                <i class="fas fa-check ml-1"></i>
+                                تکمیل تولید
+                            </button>
+                        ` : ''}
+                    </div>
+                `;
+                
+                batchesList.appendChild(batchCard);
+            });
+        }
+
+        function openBatchProductionModal() {
+            const batchFormulaSelect = document.getElementById('batch-formula');
+            batchFormulaSelect.innerHTML = '<option value="">انتخاب فرمول</option>';
+            
+            formulas.filter(f => f.status === 'active').forEach(formula => {
+                const option = document.createElement('option');
+                option.value = formula.id;
+                option.textContent = `${formula.name} (${formula.code})`;
+                option.dataset.cost = formula.totalCost;
+                batchFormulaSelect.appendChild(option);
+            });
+            
+            // Generate batch number
+            const nextBatchNumber = `B-${String(batches.length + 1).padStart(3, '0')}`;
+            document.getElementById('batch-number').value = nextBatchNumber;
+            
+            // Reset other fields
+            document.getElementById('batch-quantity').value = '1';
+            document.getElementById('batch-notes').value = '';
+            
+            updateBatchCost();
+            
+            openModal('production-modal');
+        }
+
+        function updateBatchCost() {
+            const formulaSelect = document.getElementById('batch-formula');
+            const selectedOption = formulaSelect.options[formulaSelect.selectedIndex];
+            const quantity = parseInt(document.getElementById('batch-quantity').value) || 1;
+            
+            if (selectedOption && selectedOption.value) {
+                const unitCost = parseFloat(selectedOption.dataset.cost) || 0;
+                const totalCost = unitCost * quantity;
+                
+                document.getElementById('batch-unit-cost').textContent = formatCurrency(unitCost);
+                document.getElementById('batch-total-cost').textContent = formatCurrency(totalCost);
+            } else {
+                document.getElementById('batch-unit-cost').textContent = '0 ریال';
+                document.getElementById('batch-total-cost').textContent = '0 ریال';
+            }
+        }
+
+        function startProduction() {
+            const formulaId = document.getElementById('batch-formula').value;
+            const quantity = parseInt(document.getElementById('batch-quantity').value) || 1;
+            const batchNumber = document.getElementById('batch-number').value.trim();
+            const batchDate = document.getElementById('batch-date').value;
+            const notes = document.getElementById('batch-notes').value.trim();
+            
+            if (!formulaId) {
+                showToast('لطفاً یک فرمول انتخاب کنید', 'error');
+                return;
+            }
+            
+            if (!batchNumber) {
+                showToast('لطفاً شماره بچ را وارد کنید', 'error');
+                return;
+            }
+            
+            const formula = formulas.find(f => f.id === formulaId);
+            if (!formula) return;
+            
+            const batch = {
+                id: `batch-${Date.now()}`,
+                formulaId,
+                formulaName: formula.name,
+                batchNumber,
+                quantity,
+                status: 'in_progress',
+                date: batchDate ? new Date(batchDate).toISOString() : new Date().toISOString(),
+                quality: null,
+                notes,
+                cost: formula.totalCost * quantity,
+                operator: 'کاربر فعلی'
+            };
+            
+            batches.unshift(batch);
+            saveData();
+            
+            closeModal('production-modal');
+            renderBatches();
+            showToast('تولید با موفقیت شروع شد', 'success');
+            addActivity('batch_started', `تولید بچ ${batchNumber} آغاز شد`);
+            
+            // Update stats
+            updateStats();
+        }
+
+        function startProductionFromDetail() {
+            closeModal('formula-detail-modal');
+            openBatchProductionModal();
+            
+            // Auto-select the current formula
+            setTimeout(() => {
+                document.getElementById('batch-formula').value = currentFormulaId;
+                updateBatchCost();
+            }, 100);
+        }
+
+        function viewBatchDetails(batchId) {
+            const batch = batches.find(b => b.id === batchId);
+            if (!batch) return;
+            
+            alert(`جزئیات تولید:\n\nشماره بچ: ${batch.batchNumber}\nفرمول: ${batch.formulaName}\nتعداد: ${batch.quantity}\nهزینه کل: ${formatCurrency(batch.cost)}\nوضعیت: ${batch.status === 'completed' ? 'تکمیل شده' : 'در حال تولید'}\nکیفیت: ${batch.quality ? `${batch.quality}%` : 'تعیین نشده'}\nیادداشت: ${batch.notes || 'ندارد'}`);
+        }
+
+        function completeBatch(batchId) {
+            const batch = batches.find(b => b.id === batchId);
+            if (!batch) return;
+            
+            // Ask for quality rating
+            const quality = prompt('لطفاً کیفیت تولید را وارد کنید (0-100):', '95');
+            if (quality === null) return;
+            
+            const qualityNum = parseInt(quality);
+            if (isNaN(qualityNum) || qualityNum < 0 || qualityNum > 100) {
+                showToast('کیفیت باید عددی بین 0 تا 100 باشد', 'error');
+                return;
+            }
+            
+            batch.status = 'completed';
+            batch.quality = qualityNum;
+            batch.completedAt = new Date().toISOString();
+            
+            saveData();
+            renderBatches();
+            showToast('تولید با موفقیت تکمیل شد', 'success');
+            addActivity('batch_completed', `تولید بچ ${batch.batchNumber} با کیفیت ${qualityNum}% تکمیل شد`);
+        }
+
+        // --- ANALYTICS ---
+        function initializeCharts() {
+            // Cost Chart
+            const costCtx = document.getElementById('cost-chart').getContext('2d');
+            window.costChart = new Chart(costCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['مواد اولیه', 'نیروی کار', 'انرژی', 'سایر'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [
+                            '#3b82f6',
+                            '#10b981',
+                            '#f59e0b',
+                            '#8b5cf6'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            rtl: true,
+                            labels: {
+                                font: {
+                                    family: 'Vazirmatn'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Category Chart
+            const categoryCtx = document.getElementById('category-chart').getContext('2d');
+            window.categoryChart = new Chart(categoryCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['مواد غذایی', 'آرایشی', 'تجهیزات', 'شیمیایی', 'دارویی', 'سایر'],
+                    datasets: [{
+                        label: 'تعداد فرمول‌ها',
+                        data: [0, 0, 0, 0, 0, 0],
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            rtl: true,
+                            labels: {
+                                font: {
+                                    family: 'Vazirmatn'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCharts() {
+            // Update cost chart
+            const totalMaterials = formulas.reduce((sum, f) => sum + f.costs.materials, 0);
+            const totalLabor = formulas.reduce((sum, f) => sum + f.costs.labor, 0);
+            const totalEnergy = formulas.reduce((sum, f) => sum + f.costs.energy, 0);
+            const totalOther = formulas.reduce((sum, f) => sum + f.costs.other, 0);
+            
+            window.costChart.data.datasets[0].data = [totalMaterials, totalLabor, totalEnergy, totalOther];
+            window.costChart.update();
+            
+            // Update category chart
+            const categoryCounts = {
+                food: 0,
+                cosmetic: 0,
+                equipment: 0,
+                chemical: 0,
+                pharmaceutical: 0,
+                other: 0
+            };
+            
+            formulas.forEach(f => {
+                if (categoryCounts[f.category] !== undefined) {
+                    categoryCounts[f.category]++;
+                }
+            });
+            
+            window.categoryChart.data.datasets[0].data = [
+                categoryCounts.food,
+                categoryCounts.cosmetic,
+                categoryCounts.equipment,
+                categoryCounts.chemical,
+                categoryCounts.pharmaceutical,
+                categoryCounts.other
+            ];
+            window.categoryChart.update();
+            
+            // Update production stats
+            updateProductionStats();
+        }
+
+        function updateProductionStats() {
+            const statsTable = document.getElementById('production-stats');
+            statsTable.innerHTML = '';
+            
+            // Calculate monthly production stats
+            const now = new Date();
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            
+            const monthlyBatches = batches.filter(b => {
+                const batchDate = new Date(b.date);
+                return batchDate >= monthStart && b.status === 'completed';
+            });
+            
+            // Group by formula
+            const formulaStats = {};
+            monthlyBatches.forEach(batch => {
+                if (!formulaStats[batch.formulaId]) {
+                    formulaStats[batch.formulaId] = {
+                        formulaName: batch.formulaName,
+                        totalQuantity: 0,
+                        totalCost: 0,
+                        qualitySum: 0,
+                        qualityCount: 0
+                    };
+                }
+                
+                formulaStats[batch.formulaId].totalQuantity += batch.quantity;
+                formulaStats[batch.formulaId].totalCost += batch.cost;
+                if (batch.quality) {
+                    formulaStats[batch.formulaId].qualitySum += batch.quality;
+                    formulaStats[batch.formulaId].qualityCount++;
+                }
+            });
+            
+            // Create table rows
+            Object.values(formulaStats).forEach(stat => {
+                const avgQuality = stat.qualityCount > 0 ? Math.round(stat.qualitySum / stat.qualityCount) : 0;
+                
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-800';
+                row.innerHTML = `
+                    <td class="p-3">${stat.formulaName}</td>
+                    <td class="p-3">${stat.totalQuantity}</td>
+                    <td class="p-3">${formatCurrency(stat.totalCost)}</td>
+                    <td class="p-3">${formatCurrency(stat.totalCost)}</td>
+                    <td class="p-3">${avgQuality}%</td>
+                `;
+                statsTable.appendChild(row);
+            });
+        }
+
+        // --- ACTIVITIES ---
+        function renderActivities() {
+            const activitiesDiv = document.getElementById('recent-activities');
+            activitiesDiv.innerHTML = '';
+            
+            // Sort by timestamp (newest first)
+            const sortedActivities = [...activities].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            sortedActivities.slice(0, 5).forEach(activity => {
+                const activityDiv = document.createElement('div');
+                activityDiv.className = 'flex items-start space-x-3 space-x-reverse p-3 hover:bg-gray-700/50 rounded-lg';
+                
+                let icon = 'fa-circle';
+                let iconColor = 'text-blue-400';
+                
+                switch (activity.type) {
+                    case 'formula_created':
+                        icon = 'fa-flask';
+                        iconColor = 'text-green-400';
+                        break;
+                    case 'formula_updated':
+                        icon = 'fa-edit';
+                        iconColor = 'text-blue-400';
+                        break;
+                    case 'formula_archived':
+                        icon = 'fa-archive';
+                        iconColor = 'text-gray-400';
+                        break;
+                    case 'batch_started':
+                        icon = 'fa-play';
+                        iconColor = 'text-orange-400';
+                        break;
+                    case 'batch_completed':
+                        icon = 'fa-check';
+                        iconColor = 'text-green-400';
+                        break;
+                    case 'ingredient_low':
+                        icon = 'fa-exclamation-triangle';
+                        iconColor = 'text-red-400';
+                        break;
+                    case 'product_created':
+                        icon = 'fa-box';
+                        iconColor = 'text-green-400';
+                        break;
+                    case 'product_updated':
+                        icon = 'fa-edit';
+                        iconColor = 'text-blue-400';
+                        break;
+                    case 'product_deleted':
+                        icon = 'fa-trash';
+                        iconColor = 'text-red-400';
+                        break;
+                    case 'ingredient_created':
+                        icon = 'fa-atom';
+                        iconColor = 'text-purple-400';
+                        break;
+                    case 'ingredient_updated':
+                        icon = 'fa-edit';
+                        iconColor = 'text-blue-400';
+                        break;
+                    case 'ingredient_ordered':
+                        icon = 'fa-cart-plus';
+                        iconColor = 'text-green-400';
+                        break;
+                    case 'backup_created':
+                        icon = 'fa-download';
+                        iconColor = 'text-blue-400';
+                        break;
+                    case 'data_restored':
+                        icon = 'fa-upload';
+                        iconColor = 'text-green-400';
+                        break;
+                    case 'data_reset':
+                        icon = 'fa-trash-restore';
+                        iconColor = 'text-red-400';
+                        break;
+                }
+                
+                activityDiv.innerHTML = `
+                    <div class="${iconColor} mt-1">
+                        <i class="fas ${icon}"></i>
+                    </div>
+                    <div class="flex-1">
+                        <div class="font-medium text-sm">${activity.title}</div>
+                        <div class="text-xs text-gray-400">${activity.description}</div>
+                        <div class="text-xs text-gray-500 mt-1">${formatTime(activity.timestamp)}</div>
+                    </div>
+                `;
+                
+                activitiesDiv.appendChild(activityDiv);
+            });
+        }
+
+        function addActivity(type, description) {
+            const activity = {
+                id: `A-${Date.now()}`,
+                type,
+                title: getActivityTitle(type),
+                description,
+                timestamp: new Date().toISOString()
+            };
+            
+            activities.unshift(activity);
+            saveData();
+            renderActivities();
+            
+            // Keep only last 50 activities
+            if (activities.length > 50) {
+                activities = activities.slice(0, 50);
+            }
+        }
+
+        function getActivityTitle(type) {
+            const titles = {
+                'formula_created': 'فرمول جدید',
+                'formula_updated': 'به‌روزرسانی فرمول',
+                'formula_archived': 'بایگانی فرمول',
+                'batch_started': 'شروع تولید',
+                'batch_completed': 'تکمیل تولید',
+                'ingredient_low': 'مواد اولیه کم',
+                'product_created': 'محصول جدید',
+                'product_updated': 'به‌روزرسانی محصول',
+                'product_deleted': 'حذف محصول',
+                'ingredient_created': 'ماده اولیه جدید',
+                'ingredient_updated': 'به‌روزرسانی ماده اولیه',
+                'ingredient_ordered': 'سفارش ماده اولیه',
+                'backup_created': 'پشتیبان‌گیری',
+                'data_restored': 'بازیابی داده‌ها',
+                'data_reset': 'ریست داده‌ها'
+            };
+            
+            return titles[type] || 'فعالیت جدید';
+        }
+
+        // --- UTILITY FUNCTIONS ---
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('fa-IR').format(amount) + ' ریال';
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('fa-IR');
+        }
+
+        function formatTime(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            
+            if (diffMins < 60) {
+                return `${diffMins} دقیقه قبل`;
+            } else if (diffHours < 24) {
+                return `${diffHours} ساعت قبل`;
+            } else if (diffDays < 7) {
+                return `${diffDays} روز قبل`;
+            } else {
+                return date.toLocaleDateString('fa-IR');
+            }
+        }
+
+        function getCategoryName(category) {
+            const names = {
+                'food': 'مواد غذایی',
+                'cosmetic': 'آرایشی و بهداشتی',
+                'equipment': 'تجهیزات و دستگاه‌ها',
+                'chemical': 'مواد شیمیایی',
+                'pharmaceutical': 'دارویی',
+                'other': 'سایر'
+            };
+            return names[category] || category;
+        }
+
+        function getCategoryClass(category) {
+            return `category-${category}`;
+        }
+
+        function getStatusName(status) {
+            const names = {
+                'active': 'فعال',
+                'draft': 'پیش‌نویس',
+                'archived': 'بایگانی',
+                'pending': 'در انتظار تایید'
+            };
+            return names[status] || status;
+        }
+
+        function getComplexityName(complexity) {
+            const names = {
+                'low': 'ساده',
+                'medium': 'متوسط',
+                'high': 'پیچیده'
+            };
+            return names[complexity] || complexity;
+        }
+
+        function getSafetyName(safety) {
+            const names = {
+                'low': 'پایین',
+                'medium': 'متوسط',
+                'high': 'بالا'
+            };
+            return names[safety] || safety;
+        }
+
+        function getCostClass(cost) {
+            if (cost < 50000) return 'cost-low';
+            if (cost < 100000) return 'cost-medium';
+            return 'cost-high';
+        }
+
+        function updateStats() {
+            const activeFormulas = formulas.filter(f => f.status === 'active').length;
+            const totalProducts = products.length;
+            const totalIngredients = ingredients.length;
+            const totalProcedures = formulas.reduce((sum, f) => sum + (f.production.instructions ? 1 : 0), 0);
+            
+            document.getElementById('stat-active').textContent = activeFormulas;
+            document.getElementById('stat-products').textContent = totalProducts;
+            document.getElementById('stat-ingredients').textContent = totalIngredients;
+            document.getElementById('stat-procedures').textContent = totalProcedures;
+        }
+
+        function checkStockLevels() {
+            ingredients.forEach(ingredient => {
+                if (ingredient.stock <= ingredient.minStock) {
+                    addActivity('ingredient_low', `موجودی ${ingredient.name} به حداقل رسید`);
+                }
+            });
+        }
+
+        function showToast(message, type = 'info') {
+            const colors = {
+                success: '#10b981',
+                error: '#ef4444',
+                warning: '#f59e0b',
+                info: '#3b82f6'
+            };
+            
+            Toastify({
+                text: message,
+                duration: 3000,
+                gravity: "top",
+                position: "left",
+                style: {
+                    background: colors[type],
+                    borderRadius: '8px',
+                    fontFamily: 'Vazirmatn',
+                    textAlign: 'right'
+                }
+            }).showToast();
+        }
+
+        // --- EVENT LISTENERS ---
+        function setupEventListeners() {
+            // Search input
+            document.getElementById('formula-search').addEventListener('input', renderFormulas);
+            
+            // Sort select
+            document.getElementById('sort-formulas').addEventListener('change', renderFormulas);
+            
+            // Batch formula select
+            document.getElementById('batch-formula').addEventListener('change', updateBatchCost);
+            document.getElementById('batch-quantity').addEventListener('input', updateBatchCost);
+            
+            // Cost inputs
+            document.getElementById('labor-cost').addEventListener('input', updateTotalCost);
+            document.getElementById('energy-cost').addEventListener('input', updateTotalCost);
+            document.getElementById('other-costs').addEventListener('input', updateTotalCost);
+            
+            // Real-time formula search
+            document.getElementById('formula-search').addEventListener('keyup', function(e) {
+                if (e.key === 'Enter') {
+                    renderFormulas();
+                }
+            });
+            
+            // Close backup menu when clicking outside
+            document.addEventListener('click', function(event) {
+                const backupMenu = document.getElementById('backup-menu');
+                const backupButton = document.querySelector('button[onclick="toggleBackupMenu()"]');
+                
+                if (backupMenu && !backupMenu.contains(event.target) && !backupButton.contains(event.target)) {
+                    backupMenu.classList.add('hidden');
+                }
+            });
+        }
+
+        // Initialize search with debounce
+        let searchTimeout;
+        document.getElementById('formula-search').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(renderFormulas, 300);
+        });
+    </script>
+</body>
+</html>
