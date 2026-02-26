@@ -1,1 +1,376 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سیستم ثبت اطلاعات تماس</title>
+    <!-- اضافه کردن فونت وزیرمتن برای تایپوگرافی زیبای فارسی -->
+    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.0.0/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
+    <!-- اضافه کردن Tailwind CSS برای استایل‌دهی -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="text-gray-800 antialiased">
 
+    <div class="container mx-auto max-w-5xl p-4 md:p-8">
+        <!-- هدر صفحه -->
+        <header class="mb-8 text-center md:text-right">
+            <h1 class="text-3xl font-bold text-indigo-700 mb-2">سامانه مدیریت مرکز تماس</h1>
+            <p class="text-gray-600">ثبت و نگهداری اطلاعات تماس مشتریان</p>
+        </header>
+
+        <!-- داشبورد آماری -->
+        <section class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center gap-4">
+                <div class="bg-indigo-50 p-3 rounded-lg text-indigo-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">تماس‌های امروز</p>
+                    <p id="statToday" class="text-2xl font-bold text-gray-800">0</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center gap-4">
+                <div class="bg-green-50 p-3 rounded-lg text-green-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">پر تماس‌ترین شهر</p>
+                    <p id="statTopCity" class="text-2xl font-bold text-gray-800">-</p>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm p-6 border border-gray-100 flex items-center gap-4">
+                <div class="bg-amber-50 p-3 rounded-lg text-amber-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 font-medium">نیاز به پیگیری</p>
+                    <p id="statFollowUp" class="text-2xl font-bold text-gray-800">0</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- فرم ثبت اطلاعات -->
+        <section class="bg-white rounded-xl shadow-lg p-6 mb-8 border border-gray-100">
+            <h2 class="text-xl font-semibold mb-6 text-gray-700 border-b pb-2">ثبت تماس جدید</h2>
+            <form id="callForm" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    
+                    <!-- نام مشتری -->
+                    <div>
+                        <label for="customerName" class="block text-sm font-medium text-gray-700 mb-1">نام مشتری <span class="text-red-500">*</span></label>
+                        <input type="text" id="customerName" required placeholder="مثال: علی محمدی" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow">
+                    </div>
+
+                    <!-- شماره تماس -->
+                    <div>
+                        <label for="phone" class="block text-sm font-medium text-gray-700 mb-1">شماره تماس <span class="text-red-500">*</span></label>
+                        <input type="tel" id="phone" required placeholder="0912..." dir="ltr"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow text-left">
+                    </div>
+
+                    <!-- شهر -->
+                    <div>
+                        <label for="city" class="block text-sm font-medium text-gray-700 mb-1">شهر <span class="text-red-500">*</span></label>
+                        <input type="text" id="city" required placeholder="مثال: تهران" 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow">
+                    </div>
+
+                    <!-- تاریخ تماس (پیش‌فرض شمسی) -->
+                    <div>
+                        <label for="callDate" class="block text-sm font-medium text-gray-700 mb-1">تاریخ تماس (شمسی) <span class="text-red-500">*</span></label>
+                        <input type="text" id="callDate" required dir="ltr"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow text-center bg-gray-50">
+                    </div>
+
+                    <!-- نتیجه تماس -->
+                    <div>
+                        <label for="callResult" class="block text-sm font-medium text-gray-700 mb-1">نتیجه تماس <span class="text-red-500">*</span></label>
+                        <select id="callResult" required
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow appearance-none bg-white">
+                            <option value="موفق">موفق</option>
+                            <option value="عدم پاسخگویی">عدم پاسخگویی</option>
+                            <option value="شماره اشتباه">شماره اشتباه</option>
+                            <option value="نیاز به پیگیری">نیاز به پیگیری</option>
+                            <option value="در حال بررسی">در حال بررسی</option>
+                        </select>
+                    </div>
+
+                    <!-- تاریخ و زمان پیگیری -->
+                    <div>
+                        <label for="followUpDate" class="block text-sm font-medium text-gray-700 mb-1">تاریخ/زمان پیگیری</label>
+                        <input type="text" id="followUpDate" placeholder="مثال: شنبه ساعت 10" dir="rtl"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow">
+                    </div>
+
+                    <!-- شرح مکالمه -->
+                    <div class="md:col-span-2 lg:col-span-4">
+                        <label for="description" class="block text-sm font-medium text-gray-700 mb-1">شرح مکالمه (توضیحات)</label>
+                        <textarea id="description" rows="3" placeholder="جزئیات درخواست، مشکل یا سوال مشتری را اینجا بنویسید..." 
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-shadow resize-y"></textarea>
+                    </div>
+
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="submit" 
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-6 rounded-lg shadow-sm transition-colors duration-200 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+                        </svg>
+                        ثبت اطلاعات
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- جدول نمایش اطلاعات -->
+        <section class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h2 class="text-xl font-semibold text-gray-700">لیست تماس‌های ثبت شده</h2>
+                <span id="recordCount" class="bg-indigo-100 text-indigo-800 text-xs font-medium px-2.5 py-0.5 rounded-full">0 مورد</span>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-right text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                        <tr>
+                            <th scope="col" class="px-6 py-3">شناسه</th>
+                            <th scope="col" class="px-6 py-3">نام مشتری</th>
+                            <th scope="col" class="px-6 py-3">شماره تماس</th>
+                            <th scope="col" class="px-6 py-3">شهر</th>
+                            <th scope="col" class="px-6 py-3 text-center">نتیجه</th>
+                            <th scope="col" class="px-6 py-3 text-center">پیگیری</th>
+                            <th scope="col" class="px-6 py-3 text-center">تاریخ تماس</th>
+                            <th scope="col" class="px-6 py-3 text-center">عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- ردیف‌ها توسط جاوا اسکریپت در اینجا قرار می‌گیرند -->
+                    </tbody>
+                </table>
+                <div id="emptyState" class="hidden text-center py-10 text-gray-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                    <p>هیچ تماسی تاکنون ثبت نشده است.</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- اسکریپت‌های منطق برنامه و IndexedDB -->
+    <script>
+        // --- تنظیم تاریخ پیش‌فرض شمسی ---
+        function getPersianDate() {
+            const date = new Date();
+            // استفاده از Intl برای تولید تاریخ شمسی
+            const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+            let formatter = new Intl.DateTimeFormat('fa-IR', options);
+            let parts = formatter.formatToParts(date);
+            
+            let year = parts.find(p => p.type === 'year').value;
+            let month = parts.find(p => p.type === 'month').value;
+            let day = parts.find(p => p.type === 'day').value;
+
+            // تبدیل اعداد فارسی به انگلیسی برای یکپارچگی بهتر دیتابیس (اختیاری)
+            const persianToEnglish = str => str.replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+            
+            return `${persianToEnglish(year)}/${persianToEnglish(month)}/${persianToEnglish(day)}`;
+        }
+
+        function setTodayDate() {
+            document.getElementById('callDate').value = getPersianDate();
+        }
+
+        // --- منطق IndexedDB ---
+        let db;
+        const dbName = "CallCenterDB";
+        const storeName = "calls";
+
+        // باز کردن یا ایجاد دیتابیس
+        const request = indexedDB.open(dbName, 2);
+
+        request.onerror = function(event) {
+            console.error("خطا در باز کردن دیتابیس:", event.target.error);
+            alert("مرورگر شما از پایگاه داده محلی پشتیبانی نمی‌کند یا خطایی رخ داده است.");
+        };
+
+        request.onupgradeneeded = function(event) {
+            db = event.target.result;
+            // ایجاد یک Object Store با کلید اصلی id که به صورت خودکار افزایش می‌یابد
+            if (!db.objectStoreNames.contains(storeName)) {
+                const objectStore = db.createObjectStore(storeName, { keyPath: "id", autoIncrement: true });
+                // ایجاد ایندکس برای جستجوهای احتمالی در آینده
+                objectStore.createIndex("customerName", "customerName", { unique: false });
+                objectStore.createIndex("callDate", "callDate", { unique: false });
+            }
+        };
+
+        request.onsuccess = function(event) {
+            db = event.target.result;
+            loadData(); // بارگذاری داده‌ها به محض آماده شدن دیتابیس
+        };
+
+        // ثبت اطلاعات جدید
+        document.getElementById('callForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const newCall = {
+                customerName: document.getElementById('customerName').value,
+                phone: document.getElementById('phone').value,
+                city: document.getElementById('city').value,
+                callDate: document.getElementById('callDate').value,
+                callResult: document.getElementById('callResult').value,
+                followUpDate: document.getElementById('followUpDate').value,
+                description: document.getElementById('description').value,
+                timestamp: new Date().getTime() // برای مرتب سازی
+            };
+
+            const transaction = db.transaction([storeName], "readwrite");
+            const objectStore = transaction.objectStore(storeName);
+            const addRequest = objectStore.add(newCall);
+
+            addRequest.onsuccess = function() {
+                // پاک کردن فرم پس از ثبت موفق
+                document.getElementById('callForm').reset();
+                setTodayDate(); // تنظیم مجدد تاریخ امروز
+                loadData(); // بروزرسانی جدول
+                
+                // نمایش پیام موفقیت (ساده)
+                const btn = document.querySelector('button[type="submit"]');
+                const originalText = btn.innerHTML;
+                btn.innerHTML = "ثبت شد ✓";
+                btn.classList.replace('bg-indigo-600', 'bg-green-600');
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.classList.replace('bg-green-600', 'bg-indigo-600');
+                }, 2000);
+            };
+
+            addRequest.onerror = function(event) {
+                console.error("خطا در ثبت اطلاعات:", event.target.error);
+            };
+        });
+
+        // بارگذاری و نمایش داده‌ها در جدول
+        function loadData() {
+            const tableBody = document.getElementById('tableBody');
+            const emptyState = document.getElementById('emptyState');
+            const recordCount = document.getElementById('recordCount');
+            
+            tableBody.innerHTML = ''; // پاک کردن جدول فعلی
+            let count = 0;
+
+            // متغیرهای داشبورد آماری
+            let todayCallsCount = 0;
+            let followUpCount = 0;
+            let cityCounts = {};
+            const todayDateStr = getPersianDate();
+
+            const transaction = db.transaction([storeName], "readonly");
+            const objectStore = transaction.objectStore(storeName);
+            
+            // باز کردن کرسر برای خواندن همه داده‌ها
+            objectStore.openCursor().onsuccess = function(event) {
+                const cursor = event.target.result;
+                
+                if (cursor) {
+                    count++;
+                    const data = cursor.value;
+
+                    // محاسبات داشبورد
+                    if (data.callDate === todayDateStr) todayCallsCount++;
+                    if (data.callResult === 'نیاز به پیگیری') followUpCount++;
+                    if (data.city) {
+                        const cityName = data.city.trim();
+                        cityCounts[cityName] = (cityCounts[cityName] || 0) + 1;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.className = "bg-white border-b hover:bg-gray-50 transition-colors";
+                    
+                    // استایل دادن به نتیجه تماس
+                    let resultBadge = '';
+                    switch(data.callResult) {
+                        case 'موفق': resultBadge = '<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">موفق</span>'; break;
+                        case 'نیاز به پیگیری': resultBadge = '<span class="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded">نیاز به پیگیری</span>'; break;
+                        case 'عدم پاسخگویی': resultBadge = '<span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded">عدم پاسخگویی</span>'; break;
+                        case 'شماره اشتباه': resultBadge = '<span class="bg-gray-200 text-gray-800 text-xs px-2 py-1 rounded">شماره اشتباه</span>'; break;
+                        case 'در حال بررسی': resultBadge = '<span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">در حال بررسی</span>'; break;
+                        default: resultBadge = `<span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">${data.callResult || '-'}</span>`;
+                    }
+
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 font-medium text-gray-900">${data.id}</td>
+                        <td class="px-6 py-4 font-bold text-indigo-900 cursor-help border-b border-dashed border-indigo-200" title="${data.description || 'توضیحاتی ثبت نشده است.'}">${data.customerName}</td>
+                        <td class="px-6 py-4 text-left" dir="ltr">${data.phone}</td>
+                        <td class="px-6 py-4">${data.city}</td>
+                        <td class="px-6 py-4 text-center">${resultBadge}</td>
+                        <td class="px-6 py-4 text-center text-xs text-gray-600">${data.followUpDate || '-'}</td>
+                        <td class="px-6 py-4 text-center text-left" dir="ltr">
+                            <span class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-100">${data.callDate}</span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <button onclick="deleteRecord(${data.id})" class="font-medium text-red-600 hover:text-red-800 bg-red-50 hover:bg-red-100 px-3 py-1 rounded transition-colors">
+                                حذف
+                            </button>
+                        </td>
+                    `;
+                    
+                    tableBody.appendChild(tr);
+                    cursor.continue();
+                } else {
+                    // پایان داده‌ها
+                    recordCount.textContent = `${count} مورد`;
+                    if (count === 0) {
+                        emptyState.classList.remove('hidden');
+                    } else {
+                        emptyState.classList.add('hidden');
+                    }
+
+                    // بروزرسانی داشبورد آماری
+                    document.getElementById('statToday').textContent = todayCallsCount;
+                    document.getElementById('statFollowUp').textContent = followUpCount;
+                    
+                    // پیدا کردن پر تماس‌ترین شهر
+                    let topCity = '-';
+                    let maxCityCount = 0;
+                    for (const [city, cityCount] of Object.entries(cityCounts)) {
+                        if (cityCount > maxCityCount) {
+                            maxCityCount = cityCount;
+                            topCity = city;
+                        }
+                    }
+                    document.getElementById('statTopCity').textContent = topCity !== '-' ? `${topCity} (${maxCityCount})` : '-';
+                }
+            };
+        }
+
+        // حذف رکورد
+        function deleteRecord(id) {
+            if(confirm('آیا از حذف این رکورد اطمینان دارید؟')) {
+                const transaction = db.transaction([storeName], "readwrite");
+                const objectStore = transaction.objectStore(storeName);
+                const deleteRequest = objectStore.delete(id);
+
+                deleteRequest.onsuccess = function() {
+                    loadData(); // بروزرسانی جدول پس از حذف
+                };
+            }
+        }
+
+        // تنظیم تاریخ هنگام لود شدن صفحه
+        window.onload = function() {
+            setTodayDate();
+        };
+
+    </script>
+</body>
+</html>
